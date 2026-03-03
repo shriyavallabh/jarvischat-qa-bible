@@ -1821,21 +1821,25 @@ function sendChat() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        message: msg,
+        messages: [{ role: 'user', content: msg }],
         systemPrompt: systemPrompt,
         repo: REPO
       })
     })
-    .then(function(r) { return r.json(); })
+    .then(function(r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    })
     .then(function(data) {
       var msgs = document.getElementById('chatMessages');
       msgs.removeChild(msgs.lastChild);
-      appendMessage('bot', formatBotMessage(data.response || data.message || 'No response.'));
+      var text = data.response || data.message || (data.content && data.content[0] && data.content[0].text) || 'No response.';
+      appendMessage('bot', formatBotMessage(text));
     })
     .catch(function(err) {
       var msgs = document.getElementById('chatMessages');
       msgs.removeChild(msgs.lastChild);
-      appendMessage('bot', 'Error: Could not reach the AI service. Check your connection.');
+      appendMessage('bot', 'Error: ' + err.message + '. The shared API proxy may be rate-limited. Try again in a moment.');
     });
   });
 }
