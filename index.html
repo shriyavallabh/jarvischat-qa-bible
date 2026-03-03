@@ -18,6 +18,8 @@ a{color:var(--accent);text-decoration:none}
 .pin-input{display:flex;gap:12px;justify-content:center;margin-bottom:24px}
 .pin-input input{width:48px;height:56px;text-align:center;font-size:24px;background:var(--bg);border:2px solid var(--border);border-radius:8px;color:var(--text);outline:none}
 .pin-input input:focus{border-color:var(--accent)}
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+.shake{animation:shake .4s ease}
 .pin-error{color:var(--p0);font-size:13px;display:none;margin-top:-16px;margin-bottom:16px}
 .pin-btn{background:var(--accent);color:#000;border:none;padding:12px 32px;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer}
 .pin-btn:hover{background:var(--accent-hover)}
@@ -140,11 +142,11 @@ a{color:var(--accent);text-decoration:none}
 <div class="pin-box">
 <h2>QA Test Bible</h2>
 <p>Enter PIN to access the JarvisChat QA wiki</p>
-<div class="pin-input" id="pinInput">
-<input type="text" maxlength="1" inputmode="numeric" autofocus>
-<input type="text" maxlength="1" inputmode="numeric">
-<input type="text" maxlength="1" inputmode="numeric">
-<input type="text" maxlength="1" inputmode="numeric">
+<div class="pin-input" id="pinInputGroup">
+<input type="text" maxlength="1" inputmode="numeric" autofocus class="pin-digit" data-idx="0">
+<input type="text" maxlength="1" inputmode="numeric" class="pin-digit" data-idx="1">
+<input type="text" maxlength="1" inputmode="numeric" class="pin-digit" data-idx="2">
+<input type="text" maxlength="1" inputmode="numeric" class="pin-digit" data-idx="3">
 </div>
 <p class="pin-error" id="pinError">Incorrect PIN. Try again.</p>
 <button class="pin-btn" onclick="checkPin()">Unlock</button>
@@ -159,10 +161,10 @@ a{color:var(--accent);text-decoration:none}
 <div class="sidebar-header">
 <h1>JarvisChat QA</h1>
 <div class="controls">
-<button onclick="toggleTheme()" title="Toggle theme" id="themeBtn">&#9790;</button>
+<button onclick="toggleTheme()" title="Toggle theme" id="themeToggle">&#9790;</button>
 </div>
 </div>
-<div class="search-box"><input type="text" placeholder="Search tests..." oninput="searchTests(this.value)"></div>
+<div class="search-box"><input type="text" placeholder="Search tests..." id="searchInput"></div>
 <div class="sidebar-nav">
 <a href="#hero" class="active">Overview</a>
 <div class="section-label">Feature Tests</div>
@@ -1575,24 +1577,64 @@ var issuesContextCache = null;
 var issuesContextTimestamp = 0;
 
 /* ── PIN Auth ── */
+var pinDigits = document.querySelectorAll('.pin-digit');
+
+function getPinValue() {
+  var val = '';
+  pinDigits.forEach(function(d) { val += d.value; });
+  return val;
+}
+
 function checkPin() {
-  var input = document.getElementById('pinInput');
-  if (input.value === PIN) {
+  var val = getPinValue();
+  if (val === PIN) {
     document.getElementById('pinOverlay').style.display = 'none';
     localStorage.setItem('qa-bible-auth', 'true');
   } else {
-    input.classList.add('shake');
-    setTimeout(function() { input.classList.remove('shake'); }, 500);
-    input.value = '';
+    document.getElementById('pinError').style.display = 'block';
+    var group = document.getElementById('pinInputGroup');
+    group.classList.add('shake');
+    setTimeout(function() {
+      group.classList.remove('shake');
+      document.getElementById('pinError').style.display = 'none';
+    }, 800);
+    pinDigits.forEach(function(d) { d.value = ''; });
+    pinDigits[0].focus();
   }
 }
+
+pinDigits.forEach(function(digit, idx) {
+  digit.addEventListener('input', function() {
+    this.value = this.value.replace(/[^0-9]/g, '');
+    if (this.value && idx < pinDigits.length - 1) {
+      pinDigits[idx + 1].focus();
+    }
+    if (getPinValue().length === 4) {
+      checkPin();
+    }
+  });
+  digit.addEventListener('keydown', function(e) {
+    if (e.key === 'Backspace' && !this.value && idx > 0) {
+      pinDigits[idx - 1].focus();
+      pinDigits[idx - 1].value = '';
+    }
+    if (e.key === 'Enter') checkPin();
+  });
+  digit.addEventListener('paste', function(e) {
+    e.preventDefault();
+    var paste = (e.clipboardData || window.clipboardData).getData('text').replace(/[^0-9]/g, '');
+    for (var i = 0; i < Math.min(paste.length, 4); i++) {
+      pinDigits[i].value = paste[i];
+    }
+    if (paste.length >= 4) checkPin();
+    else if (paste.length > 0) pinDigits[Math.min(paste.length, 3)].focus();
+  });
+});
+
 (function() {
   if (localStorage.getItem('qa-bible-auth') === 'true') {
     document.getElementById('pinOverlay').style.display = 'none';
   }
-  document.getElementById('pinInput').addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') checkPin();
-  });
 })();
 
 /* ── Theme Toggle ── */
