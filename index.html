@@ -1,0 +1,1900 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JarvisChat QA Test Bible</title>
+<style>
+:root{--bg:#0f172a;--surface:#1e293b;--surface-hover:#334155;--border:#334155;--text:#f1f5f9;--text-sec:#94a3b8;--accent:#FFBA00;--accent-hover:#e6a800;--p0:#ef4444;--p1:#f97316;--p2:#eab308;--p3:#6b7280;--sidebar-w:260px;--chat-w:45%;--green:#10b981;--blue:#3b82f6;--purple:#a855f7;--forest:#0C3B2E;--sage:#6D9773}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
+a{color:var(--accent);text-decoration:none}
+.light{--bg:#f8fafc;--surface:#ffffff;--surface-hover:#f1f5f9;--border:#e2e8f0;--text:#1e293b;--text-sec:#64748b}
+/* PIN overlay */
+.pin-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bg);z-index:10000;display:flex;align-items:center;justify-content:center}
+.pin-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:48px;text-align:center;max-width:400px;width:90%}
+.pin-box h2{font-size:24px;margin-bottom:8px}
+.pin-box p{color:var(--text-sec);margin-bottom:24px;font-size:14px}
+.pin-input{display:flex;gap:12px;justify-content:center;margin-bottom:24px}
+.pin-input input{width:48px;height:56px;text-align:center;font-size:24px;background:var(--bg);border:2px solid var(--border);border-radius:8px;color:var(--text);outline:none}
+.pin-input input:focus{border-color:var(--accent)}
+.pin-error{color:var(--p0);font-size:13px;display:none;margin-top:-16px;margin-bottom:16px}
+.pin-btn{background:var(--accent);color:#000;border:none;padding:12px 32px;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer}
+.pin-btn:hover{background:var(--accent-hover)}
+/* Sidebar */
+.sidebar{position:fixed;top:0;left:0;width:var(--sidebar-w);height:100vh;background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;z-index:100;transition:transform .3s}
+.sidebar-header{padding:20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.sidebar-header h1{font-size:16px;font-weight:700;color:var(--accent)}
+.sidebar-header .controls{display:flex;gap:8px}
+.sidebar-header button{background:none;border:1px solid var(--border);color:var(--text-sec);width:32px;height:32px;border-radius:6px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center}
+.sidebar-header button:hover{background:var(--surface-hover);color:var(--text)}
+.sidebar-nav{padding:12px}
+.sidebar-nav a{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;color:var(--text-sec);font-size:13px;font-weight:500;transition:all .15s}
+.sidebar-nav a:hover,.sidebar-nav a.active{background:var(--surface-hover);color:var(--text)}
+.sidebar-nav a .count{margin-left:auto;font-size:11px;background:var(--bg);padding:2px 8px;border-radius:10px;color:var(--text-sec)}
+.sidebar-nav .section-label{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text-sec);padding:16px 12px 6px;font-weight:600}
+/* Main */
+.main{margin-left:var(--sidebar-w);padding:0;transition:margin .3s}
+.main.chat-open{margin-right:var(--chat-w)}
+/* Hero */
+.hero{padding:60px 40px;background:linear-gradient(135deg,var(--forest),#134E2B);border-bottom:1px solid var(--border)}
+.hero h1{font-size:36px;font-weight:700;margin-bottom:8px;color:#fff}
+.hero .subtitle{color:var(--sage);font-size:16px;margin-bottom:24px}
+.hero .stats{display:flex;gap:24px;flex-wrap:wrap}
+.hero .stat{background:rgba(255,255,255,.1);padding:16px 24px;border-radius:12px;min-width:140px}
+.hero .stat .num{font-size:28px;font-weight:700;color:var(--accent)}
+.hero .stat .label{font-size:12px;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:1px;margin-top:4px}
+/* Chapter */
+.chapter{padding:40px;border-bottom:1px solid var(--border)}
+.chapter-title{font-size:24px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:12px}
+.chapter-desc{color:var(--text-sec);font-size:14px;margin-bottom:24px}
+/* Scenario */
+.scenario{background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:16px;overflow:hidden;transition:border-color .2s}
+.scenario:hover{border-color:var(--accent)}
+.scenario-header{padding:16px 20px;display:flex;align-items:center;gap:12px;cursor:pointer;user-select:none}
+.scenario-header .test-id{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent);font-weight:600;min-width:110px}
+.scenario-header h3{font-size:14px;font-weight:600;flex:1}
+.priority{font-size:11px;font-weight:700;padding:2px 10px;border-radius:10px;text-transform:uppercase}
+.p0{background:rgba(239,68,68,.15);color:var(--p0)}
+.p1{background:rgba(249,115,22,.15);color:var(--p1)}
+.p2{background:rgba(234,179,8,.15);color:var(--p2)}
+.p3{background:rgba(107,114,128,.15);color:var(--p3)}
+.role-badge{font-size:11px;padding:2px 10px;border-radius:10px;background:rgba(59,130,246,.15);color:var(--blue)}
+.scenario-body{padding:0 20px 16px;display:none}
+.scenario.open .scenario-body{display:block}
+.precondition{font-size:13px;color:var(--text-sec);margin-bottom:12px;padding:8px 12px;background:var(--bg);border-radius:6px}
+.steps-table{width:100%;border-collapse:collapse;font-size:13px}
+.steps-table th{text-align:left;padding:8px 12px;background:var(--bg);border-bottom:1px solid var(--border);font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-sec)}
+.steps-table td{padding:8px 12px;border-bottom:1px solid var(--border);vertical-align:top}
+.steps-table td:first-child{width:36px;text-align:center;color:var(--text-sec);font-weight:600}
+.steps-table tr:last-child td{border-bottom:none}
+/* Issue tracker */
+.issues-section{padding:40px}
+.issues-section h2{font-size:24px;font-weight:700;margin-bottom:20px}
+.issue-filters{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+.issue-filter{padding:6px 16px;border-radius:20px;border:1px solid var(--border);background:none;color:var(--text-sec);font-size:13px;cursor:pointer}
+.issue-filter.active{background:var(--accent);color:#000;border-color:var(--accent)}
+.issue-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:10px;display:flex;align-items:flex-start;gap:12px}
+.issue-card .severity{width:8px;height:8px;border-radius:50%;margin-top:6px;flex-shrink:0}
+.issue-card .severity.p0{background:var(--p0)}.issue-card .severity.p1{background:var(--p1)}.issue-card .severity.p2{background:var(--p2)}.issue-card .severity.p3{background:var(--p3)}
+.issue-card .issue-content{flex:1}
+.issue-card .issue-title{font-weight:600;font-size:14px;margin-bottom:4px}
+.issue-card .issue-meta{font-size:12px;color:var(--text-sec)}
+.issue-card .issue-actions{display:flex;gap:6px}
+.issue-card .issue-actions button{background:none;border:1px solid var(--border);color:var(--text-sec);padding:4px 12px;border-radius:6px;font-size:12px;cursor:pointer}
+.issue-card .issue-actions button:hover{background:var(--surface-hover);color:var(--text)}
+.no-issues{text-align:center;padding:40px;color:var(--text-sec)}
+/* Chat FAB */
+.chat-fab{position:fixed;bottom:24px;right:24px;width:56px;height:56px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 20px rgba(255,186,0,.3);z-index:200;transition:transform .2s}
+.chat-fab:hover{transform:scale(1.1)}
+.chat-fab.hidden{display:none}
+.chat-fab svg{width:24px;height:24px;fill:#000}
+/* Chat panel */
+.chat-panel{position:fixed;top:0;right:0;width:var(--chat-w);height:100vh;background:var(--surface);border-left:1px solid var(--border);z-index:300;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .3s}
+.chat-panel.open{transform:translateX(0)}
+.chat-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.chat-header h3{font-size:16px;font-weight:600}
+.chat-header .chat-kbd{font-size:11px;color:var(--text-sec);background:var(--bg);padding:2px 8px;border-radius:4px;font-family:monospace}
+.chat-close{background:none;border:none;color:var(--text-sec);cursor:pointer;font-size:20px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:6px}
+.chat-close:hover{background:var(--surface-hover);color:var(--text)}
+.chat-messages{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:12px}
+.chat-msg{max-width:85%;padding:12px 16px;border-radius:12px;font-size:14px;line-height:1.5}
+.chat-msg.user{background:var(--accent);color:#000;align-self:flex-end;border-bottom-right-radius:4px}
+.chat-msg.bot{background:var(--bg);color:var(--text);align-self:flex-start;border-bottom-left-radius:4px}
+.chat-msg.bot code{background:var(--surface-hover);padding:1px 4px;border-radius:3px;font-size:12px}
+.chat-msg.bot pre{background:var(--surface-hover);padding:8px;border-radius:6px;margin:8px 0;overflow-x:auto;font-size:12px}
+.chat-input-area{padding:16px 20px;border-top:1px solid var(--border);display:flex;gap:8px}
+.chat-input-area input{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 16px;color:var(--text);font-size:14px;outline:none}
+.chat-input-area input:focus{border-color:var(--accent)}
+.chat-input-area button{background:var(--accent);color:#000;border:none;padding:10px 20px;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px}
+.chat-issue-btn{background:var(--p0)!important;color:#fff!important;font-size:12px!important;padding:6px 12px!important;border-radius:6px;border:none;cursor:pointer;margin-top:8px}
+/* Toast */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--green);color:#fff;padding:12px 24px;border-radius:8px;font-size:14px;font-weight:500;z-index:9999;opacity:0;transition:opacity .3s}
+.toast.show{opacity:1}
+/* Mobile */
+@media(max-width:900px){
+  .sidebar{transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0)}
+  .main{margin-left:0}
+  .main.chat-open{margin-right:0}
+  .chat-panel{width:100%}
+  .hero{padding:30px 20px}
+  .hero h1{font-size:24px}
+  .hero .stat{min-width:100px;padding:12px 16px}
+  .hero .stat .num{font-size:22px}
+  .chapter{padding:20px}
+  .mobile-toggle{display:flex!important}
+}
+.mobile-toggle{display:none;position:fixed;top:12px;left:12px;z-index:150;background:var(--surface);border:1px solid var(--border);width:40px;height:40px;border-radius:8px;align-items:center;justify-content:center;cursor:pointer;color:var(--text)}
+.expand-icon{transition:transform .2s;display:inline-block;font-size:10px;margin-right:4px}
+.scenario.open .expand-icon{transform:rotate(90deg)}
+.search-box{padding:12px;border-bottom:1px solid var(--border)}
+.search-box input{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 12px;color:var(--text);font-size:13px;outline:none}
+.search-box input:focus{border-color:var(--accent)}
+</style>
+</head>
+<body>
+
+<!-- PIN Auth Overlay -->
+<div class="pin-overlay" id="pinOverlay">
+<div class="pin-box">
+<h2>QA Test Bible</h2>
+<p>Enter PIN to access the JarvisChat QA wiki</p>
+<div class="pin-input" id="pinInput">
+<input type="text" maxlength="1" inputmode="numeric" autofocus>
+<input type="text" maxlength="1" inputmode="numeric">
+<input type="text" maxlength="1" inputmode="numeric">
+<input type="text" maxlength="1" inputmode="numeric">
+</div>
+<p class="pin-error" id="pinError">Incorrect PIN. Try again.</p>
+<button class="pin-btn" onclick="checkPin()">Unlock</button>
+</div>
+</div>
+
+<!-- Mobile sidebar toggle -->
+<button class="mobile-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">&#9776;</button>
+
+<!-- Sidebar -->
+<nav class="sidebar" id="sidebar">
+<div class="sidebar-header">
+<h1>JarvisChat QA</h1>
+<div class="controls">
+<button onclick="toggleTheme()" title="Toggle theme" id="themeBtn">&#9790;</button>
+</div>
+</div>
+<div class="search-box"><input type="text" placeholder="Search tests..." oninput="searchTests(this.value)"></div>
+<div class="sidebar-nav">
+<a href="#hero" class="active">Overview</a>
+<div class="section-label">Feature Tests</div>
+<a href="#ch-auth">Authentication <span class="count">14</span></a>
+<a href="#ch-dash">Dashboard <span class="count">10</span></a>
+<a href="#ch-inbx">Inbox & Conversations <span class="count">18</span></a>
+<a href="#ch-ctct">Contacts & CRM <span class="count">12</span></a>
+<a href="#ch-camp">Campaigns <span class="count">10</span></a>
+<a href="#ch-lead">Leads Pipeline <span class="count">10</span></a>
+<a href="#ch-aitr">AI Training <span class="count">12</span></a>
+<a href="#ch-flow">Flow Builder <span class="count">10</span></a>
+<a href="#ch-bill">Billing & Payments <span class="count">14</span></a>
+<a href="#ch-anlt">Analytics <span class="count">10</span></a>
+<a href="#ch-sett">Settings <span class="count">14</span></a>
+<a href="#ch-admn">Admin Panel <span class="count">14</span></a>
+<a href="#ch-scty">Security & RBAC <span class="count">12</span></a>
+<div class="section-label">Tools</div>
+<a href="#issues">Issue Tracker <span class="count" id="issueCount">0</span></a>
+</div>
+</nav>
+
+<!-- Main content -->
+<div class="main" id="mainContent">
+
+<!-- Hero -->
+<section class="hero" id="hero">
+<h1>JarvisChat QA Test Bible</h1>
+<p class="subtitle">Comprehensive QA coverage for JarvisDaily WhatsApp AI Automation SaaS</p>
+<div class="stats">
+<div class="stat"><div class="num" id="totalTests">160</div><div class="label">Test Scenarios</div></div>
+<div class="stat"><div class="num">13</div><div class="label">Chapters</div></div>
+<div class="stat"><div class="num">34</div><div class="label">Frontend Pages</div></div>
+<div class="stat"><div class="num">158+</div><div class="label">API Endpoints</div></div>
+<div class="stat"><div class="num">4</div><div class="label">User Roles</div></div>
+</div>
+</section>
+
+<!-- Chapter 1: Authentication -->
+<section class="chapter" id="ch-auth">
+<h2 class="chapter-title">1. Authentication & Onboarding</h2>
+<p class="chapter-desc">Phone OTP, Google OAuth, JWT tokens, onboarding wizard, team invites, and session management. Auth routes: /login, /signup, /onboarding, /forgot-password, /invite/[token]</p>
+
+<div class="scenario" id="QB-AUTH-001">
+<div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-AUTH-001</span><h3>Phone OTP login - happy path</h3><span class="priority p0">P0</span><span class="role-badge">All Roles</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> User has an existing account with phone +919765071249. Services running.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Navigate to /login</td><td>Login page loads with Phone OTP and Google tabs</td></tr>
+<tr><td>2</td><td>Enter phone number 9765071249 in the phone input</td><td>+91 prefix auto-applied. Phone input accepts 10 digits.</td></tr>
+<tr><td>3</td><td>Click "Send OTP"</td><td>OTP sent. 6-digit OTP input boxes appear. 30s resend timer starts.</td></tr>
+<tr><td>4</td><td>Enter valid 6-digit OTP (dev: 123456)</td><td>OTP verified. JWT access token (15min) + refresh token (7d) issued.</td></tr>
+<tr><td>5</td><td>Observe redirect</td><td>User redirected to /dashboard. Sidebar, metrics, charts visible.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-AUTH-002">
+<div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-AUTH-002</span><h3>Google OAuth login</h3><span class="priority p0">P0</span><span class="role-badge">All Roles</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Google OAuth configured. User has Google account linked.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Navigate to /login and click "Sign in with Google"</td><td>Google OAuth consent screen opens</td></tr>
+<tr><td>2</td><td>Select Google account and authorize</td><td>Callback to /auth/action with authorization code</td></tr>
+<tr><td>3</td><td>Observe token exchange</td><td>POST /api/v1/auth/google called. Tokens issued. User object returned.</td></tr>
+<tr><td>4</td><td>Observe redirect</td><td>Redirect to /dashboard (existing user) or /onboarding (new user)</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-AUTH-003">
+<div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-AUTH-003</span><h3>New user signup with tenant auto-creation</h3><span class="priority p0">P0</span><span class="role-badge">New User</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Phone number not registered. Firebase auth enabled.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Navigate to /signup. Enter name, phone, verify OTP.</td><td>Signup page loads. OTP flow completes successfully.</td></tr>
+<tr><td>2</td><td>Observe backend</td><td>New tenant created with 500 trial credits. User created with role "owner".</td></tr>
+<tr><td>3</td><td>Observe redirect</td><td>User redirected to /onboarding (onboarding not yet completed)</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-AUTH-004">
+<div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-AUTH-004</span><h3>Invalid OTP rejected</h3><span class="priority p1">P1</span><span class="role-badge">All Roles</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> OTP sent to valid phone number.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Enter incorrect OTP (e.g., 000000)</td><td>Error message: "Invalid OTP". Input fields highlighted red.</td></tr>
+<tr><td>2</td><td>Enter wrong OTP 5 times within 1 minute</td><td>Rate limit triggered. "Too many attempts" error. 429 status code.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-AUTH-005">
+<div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-AUTH-005</span><h3>JWT token refresh flow</h3><span class="priority p0">P0</span><span class="role-badge">All Roles</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> User logged in. Access token about to expire (15min TTL).</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Wait for access token to near expiry</td><td>apiClient auto-detects expiring token</td></tr>
+<tr><td>2</td><td>Observe POST /api/v1/auth/refresh call</td><td>New access token issued. Old refresh token rotated (one-time use).</td></tr>
+<tr><td>3</td><td>Verify old refresh token is invalidated</td><td>Using old refresh token returns 401 Unauthorized</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-AUTH-006">
+<div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-AUTH-006</span><h3>Single session logout</h3><span class="priority p1">P1</span><span class="role-badge">All Roles</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> User logged in on this device.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Click user avatar dropdown > "Sign Out"</td><td>POST /api/v1/auth/logout called. JTI added to Redis blocklist.</td></tr>
+<tr><td>2</td><td>Observe redirect</td><td>Redirected to /login. Refresh token cookie cleared.</td></tr>
+<tr><td>3</td><td>Try accessing /dashboard directly</td><td>Redirected to /login (middleware blocks unauthenticated access)</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-AUTH-007">
+<div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-AUTH-007</span><h3>Logout all devices</h3><span class="priority p1">P1</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> User logged in on multiple devices.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>POST /api/v1/auth/logout-all</td><td>User's tokenVersion incremented in DB. All existing tokens invalidated.</td></tr>
+<tr><td>2</td><td>Try using old access token from another device</td><td>401 Unauthorized (token version mismatch)</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-AUTH-008">
+<div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-AUTH-008</span><h3>Protected route redirect for unauthenticated users</h3><span class="priority p0">P0</span><span class="role-badge">Unauthenticated</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> User not logged in (no valid session).</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Navigate to /dashboard, /inbox, /contacts, /billing, /settings</td><td>Each redirects to /login via Next.js Edge middleware</td></tr>
+<tr><td>2</td><td>Navigate to /pricing, /privacy, /terms</td><td>Pages load without redirect (public routes)</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-AUTH-009">
+<div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-AUTH-009</span><h3>Onboarding wizard - 3-step completion</h3><span class="priority p0">P0</span><span class="role-badge">Owner</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> New user signed up. Onboarding not completed.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Observe /onboarding page with Step 1: Business Details</td><td>Left sidebar shows progress (desktop). Form fields: business name, email, website.</td></tr>
+<tr><td>2</td><td>Fill business name and click Next</td><td>Step 2: Industry selector loads with 11 industry options</td></tr>
+<tr><td>3</td><td>Select industry and click Next</td><td>Step 3: WhatsApp Setup with connection instructions</td></tr>
+<tr><td>4</td><td>Click "Complete Setup"</td><td>PATCH /api/v1/auth/onboarding called. Tenant onboarding_completed = true. Redirect to /dashboard.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-AUTH-010">
+<div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-AUTH-010</span><h3>Team invite acceptance</h3><span class="priority p1">P1</span><span class="role-badge">New Team Member</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Owner created invite. Invite token not expired (7d TTL).</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Navigate to /invite/[valid-token]</td><td>Invite page shows: inviting tenant name, role, accept button</td></tr>
+<tr><td>2</td><td>Click "Accept Invite"</td><td>POST /api/v1/team/invites/[token]/accept. User created with assigned role.</td></tr>
+<tr><td>3</td><td>Navigate to /invite/[expired-token]</td><td>Page shows "Invite expired" message. No accept button.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-AUTH-011">
+<div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-AUTH-011</span><h3>Forgot password flow</h3><span class="priority p1">P1</span><span class="role-badge">All Roles</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> User has email/password account.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Navigate to /forgot-password</td><td>Email input form displayed</td></tr>
+<tr><td>2</td><td>Enter registered email and submit</td><td>POST /api/v1/auth/forgot-password. Success message shown.</td></tr>
+<tr><td>3</td><td>Check email (or console in dev)</td><td>Password reset link received via Resend (or console log in dev mode)</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-AUTH-012">
+<div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-AUTH-012</span><h3>Account linking - phone + Google same email</h3><span class="priority p2">P2</span><span class="role-badge">All Roles</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> User signed up with phone. Same email exists in Google account.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Sign in with Google using same email as phone-registered account</td><td>Backend detects matching email. Accounts linked (googleId added to user).</td></tr>
+<tr><td>2</td><td>Verify both login methods work</td><td>User can login via phone OTP or Google OAuth to same account/tenant</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-AUTH-013">
+<div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-AUTH-013</span><h3>Authenticated user redirected from auth pages</h3><span class="priority p2">P2</span><span class="role-badge">All Roles</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> User already logged in with valid session.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Navigate to /login while authenticated</td><td>Redirected to /dashboard (middleware prevents double login)</td></tr>
+<tr><td>2</td><td>Navigate to /signup while authenticated</td><td>Redirected to /dashboard</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-AUTH-014">
+<div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-AUTH-014</span><h3>OTP resend timer and rate limiting</h3><span class="priority p2">P2</span><span class="role-badge">All Roles</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> User on login page, OTP requested.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Click "Send OTP" and observe resend button</td><td>Resend button disabled. 30-second countdown timer shown.</td></tr>
+<tr><td>2</td><td>Wait 30 seconds</td><td>Resend button becomes active. Can request new OTP.</td></tr>
+<tr><td>3</td><td>Request OTP 5+ times in 1 minute</td><td>Rate limited: 429 Too Many Requests. Error shown to user.</td></tr>
+</tbody></table></div></div>
+
+</section>
+
+<!-- Chapter 2: Dashboard -->
+<section class="chapter" id="ch-dash">
+<h2 class="chapter-title">2. Dashboard</h2>
+<p class="chapter-desc">Main dashboard with metrics cards, token usage chart, AI resolution widget, recent conversations, quick actions, notification bell, sidebar, and mobile navigation.</p>
+
+<div class="scenario" id="QB-DASH-001">
+<div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-DASH-001</span><h3>Dashboard loads with 4 metric cards</h3><span class="priority p0">P0</span><span class="role-badge">All Roles</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> User logged in. Dashboard API endpoints responding.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Navigate to /dashboard</td><td>Page loads. GET /api/v1/dashboard/metrics called.</td></tr>
+<tr><td>2</td><td>Observe 4 metric cards</td><td>Active Conversations, Messages Today, AI Resolution Rate, Token Balance displayed with Indian number formatting (e.g., 1,23,456)</td></tr>
+<tr><td>3</td><td>Observe trend badges</td><td>Each card shows up/down/flat trend with percentage change</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-DASH-002">
+<div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-DASH-002</span><h3>Token usage 30-day chart</h3><span class="priority p1">P1</span><span class="role-badge">All Roles</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> User logged in with token usage history.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Observe token usage chart on dashboard</td><td>SVG area chart renders with 30 data points. Dual series: AI Tokens + Other.</td></tr>
+<tr><td>2</td><td>Hover over chart data points</td><td>Tooltip shows date and token count for each series</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-DASH-003">
+<div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-DASH-003</span><h3>AI resolution rate widget with period selector</h3><span class="priority p1">P1</span><span class="role-badge">All Roles</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> AI agent has processed conversations.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Observe AI resolution rate donut chart</td><td>SVG donut chart with resolution percentage. Stats: Total, Confidence, Avg Time.</td></tr>
+<tr><td>2</td><td>Click "7d" period selector</td><td>Chart updates with 7-day data. GET /api/v1/dashboard/ai-stats?period=7d</td></tr>
+<tr><td>3</td><td>Click "30d" period selector</td><td>Chart updates with 30-day data</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-DASH-004">
+<div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-DASH-004</span><h3>Recent conversations list</h3><span class="priority p1">P1</span><span class="role-badge">All Roles</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Tenant has active conversations.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Observe Recent Conversations section</td><td>10 most recent conversations listed with avatars, status badges, relative timestamps</td></tr>
+<tr><td>2</td><td>Check status badges</td><td>Color-coded: Open (emerald), AI Active (blue), Resolved (gray), Pending (amber)</td></tr>
+<tr><td>3</td><td>Click "View All" link</td><td>Navigates to /inbox</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-DASH-005">
+<div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-DASH-005</span><h3>Quick action cards with role-based visibility</h3><span class="priority p1">P1</span><span class="role-badge">All Roles</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> User logged in with specific role.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Login as Owner/Admin</td><td>4 quick actions visible: New Broadcast, Train AI, View Inbox, Add Contact</td></tr>
+<tr><td>2</td><td>Login as Agent</td><td>Only View Inbox and Add Contact visible. Train AI and Broadcast hidden.</td></tr>
+<tr><td>3</td><td>Click each quick action card</td><td>Navigates to correct page (/campaigns, /ai-training, /inbox, /contacts)</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-DASH-006">
+<div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-DASH-006</span><h3>Notification bell with dropdown</h3><span class="priority p1">P1</span><span class="role-badge">All Roles</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> User has unread notifications.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Observe notification bell icon in header</td><td>Red dot indicator visible when unread notifications exist</td></tr>
+<tr><td>2</td><td>Click notification bell</td><td>Dropdown opens with notification list (5 types), relative timestamps</td></tr>
+<tr><td>3</td><td>Click "Mark All Read"</td><td>All notifications marked as read. Unread indicator disappears.</td></tr>
+<tr><td>4</td><td>Dismiss individual notification</td><td>Notification removed from list with animation</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-DASH-007">
+<div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-DASH-007</span><h3>Real-time metric updates via Socket.io</h3><span class="priority p1">P1</span><span class="role-badge">All Roles</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Socket.io connected. User on dashboard.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>New conversation created by another user or AI</td><td>Active Conversations card updates with pulse animation</td></tr>
+<tr><td>2</td><td>Observe Socket.io event: conversation:count_update</td><td>Metric card value increments without page refresh</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-DASH-008">
+<div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-DASH-008</span><h3>Sidebar collapse and expand</h3><span class="priority p2">P2</span><span class="role-badge">All Roles</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> User on desktop (1280px+).</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Click sidebar collapse button</td><td>Sidebar shrinks to 64px (icon-only). Tooltips appear on hover.</td></tr>
+<tr><td>2</td><td>Refresh page</td><td>Sidebar stays collapsed (state persisted in localStorage)</td></tr>
+<tr><td>3</td><td>Click expand button</td><td>Sidebar returns to 250px with full labels</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-DASH-009">
+<div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-DASH-009</span><h3>Low balance banner display</h3><span class="priority p1">P1</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Token balance below threshold.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Set balance below 500 tokens</td><td>Yellow warning banner: "Your token balance is running low"</td></tr>
+<tr><td>2</td><td>Set balance below 100 tokens</td><td>Red critical banner: "Token balance critically low"</td></tr>
+<tr><td>3</td><td>Click "Buy Tokens" link in banner</td><td>Navigates to /billing page</td></tr>
+<tr><td>4</td><td>Dismiss banner</td><td>Banner hidden. Reappears on next page load if balance still low.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-DASH-010">
+<div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-DASH-010</span><h3>Mobile responsive layout</h3><span class="priority p1">P1</span><span class="role-badge">All Roles</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Mobile viewport (390x844, iPhone 14).</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Load /dashboard on mobile</td><td>Sidebar hidden. Bottom nav bar visible with 5 items + "More" button.</td></tr>
+<tr><td>2</td><td>Tap "More" button</td><td>Sheet slides up with remaining nav items (Settings, AI Training, etc.)</td></tr>
+<tr><td>3</td><td>Verify touch targets</td><td>All interactive elements at least 44px touch target size</td></tr>
+</tbody></table></div></div>
+
+</section>
+
+<!-- Chapter 3: Inbox & Conversations -->
+<section class="chapter" id="ch-inbx">
+<h2 class="chapter-title">3. Inbox & Conversations</h2>
+<p class="chapter-desc">Three-panel inbox: conversation list, message thread, contact sidebar. Real-time messaging, human takeover, templates, quick replies, internal notes, agent assignment, search.</p>
+
+<div class="scenario" id="QB-INBX-001">
+<div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-INBX-001</span><h3>Conversation list loads with status filter tabs</h3><span class="priority p0">P0</span><span class="role-badge">All Roles</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Tenant has conversations in various statuses.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Navigate to /inbox</td><td>Three-panel layout loads. Left: conversation list. Center: empty/selected thread. Right: contact info (desktop).</td></tr>
+<tr><td>2</td><td>Observe 5 status tabs</td><td>All, Open, Bot Active, Pending, Resolved tabs with count badges</td></tr>
+<tr><td>3</td><td>Click "Open" tab</td><td>Only conversations with status=open displayed. Count matches.</td></tr>
+<tr><td>4</td><td>Scroll to bottom of list</td><td>Infinite scroll triggers. More conversations loaded (cursor-based pagination).</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-INBX-002">
+<div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-INBX-002</span><h3>Conversation search with debounce</h3><span class="priority p1">P1</span><span class="role-badge">All Roles</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Multiple conversations exist.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Type contact name in search box</td><td>Search debounced (300ms delay). Matching conversations filtered.</td></tr>
+<tr><td>2</td><td>Clear search</td><td>Full conversation list restored</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-INBX-003">
+<div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-INBX-003</span><h3>Message thread displays with WhatsApp markdown</h3><span class="priority p0">P0</span><span class="role-badge">All Roles</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Conversation selected with messages containing markdown.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Click a conversation in the list</td><td>Message thread loads in center panel. GET /api/v1/conversations/:id/messages</td></tr>
+<tr><td>2</td><td>Observe message bubbles</td><td>Inbound (left-aligned, gray), Outbound (right-aligned, green). Timestamps on each.</td></tr>
+<tr><td>3</td><td>Check WhatsApp markdown rendering</td><td>*bold*, _italic_, ~strikethrough~, ```code``` rendered correctly</td></tr>
+<tr><td>4</td><td>Observe AI messages</td><td>AI Response badge visible on bot-sent messages. Distinct styling from human messages.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-INBX-004">
+<div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-INBX-004</span><h3>Send text message with optimistic UI</h3><span class="priority p0">P0</span><span class="role-badge">Owner, Admin, Agent</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Conversation selected. User has agent/admin/owner role. Token balance sufficient.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Type message in compose area</td><td>Auto-resize textarea (max 5 lines). Character count if applicable.</td></tr>
+<tr><td>2</td><td>Press Enter to send</td><td>Message appears immediately (optimistic UI) with "sending" status. POST /api/v1/conversations/:id/messages fired.</td></tr>
+<tr><td>3</td><td>Observe status progression</td><td>Status icons: clock (sending) -> single check (sent) -> double check (delivered) -> blue checks (read)</td></tr>
+<tr><td>4</td><td>Press Shift+Enter</td><td>Inserts newline instead of sending</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-INBX-005">
+<div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-INBX-005</span><h3>Human takeover - Take Over from AI</h3><span class="priority p0">P0</span><span class="role-badge">Owner, Admin, Agent</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Conversation in bot_active status (AI handling).</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Observe "Take Over" button in message thread</td><td>Button visible when conversation status = bot_active</td></tr>
+<tr><td>2</td><td>Click "Take Over"</td><td>Status changes to "open". System message: "[Agent] took over from AI". Compose area enabled.</td></tr>
+<tr><td>3</td><td>Observe Socket.io event</td><td>conversation:takeover event emitted to tenant room</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-INBX-006">
+<div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-INBX-006</span><h3>Return conversation to AI</h3><span class="priority p1">P1</span><span class="role-badge">Owner, Admin, Agent</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Conversation taken over by human (status = open).</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Click "Return to AI" button</td><td>Status changes to bot_active. System message: "[Agent] returned conversation to AI".</td></tr>
+<tr><td>2</td><td>Next inbound message</td><td>AI agent responds automatically (if enabled)</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-INBX-007">
+<div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-INBX-007</span><h3>Template selector with variable substitution</h3><span class="priority p1">P1</span><span class="role-badge">Owner, Admin, Agent</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> WhatsApp templates approved and available.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Click template icon in compose area</td><td>Template selector dialog opens. Search + category filter (utility/marketing/auth).</td></tr>
+<tr><td>2</td><td>Select a template with {{variables}}</td><td>Variable input fields appear. Live preview updates as variables are filled.</td></tr>
+<tr><td>3</td><td>Fill all variables and click Send</td><td>Template message sent with substituted values. WhatsApp-style preview (#DCF8C6) shown.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-INBX-008">
+<div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-INBX-008</span><h3>Quick reply "/" command palette</h3><span class="priority p1">P1</span><span class="role-badge">Owner, Admin, Agent</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Quick replies configured for tenant.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Type "/" in compose area</td><td>Quick reply palette appears above compose area with filtered list</td></tr>
+<tr><td>2</td><td>Type "/gre" to filter</td><td>Only quick replies matching "gre" (e.g., "greeting") shown</td></tr>
+<tr><td>3</td><td>Use ArrowDown + Enter to select</td><td>Quick reply content inserted into compose area. Palette closes.</td></tr>
+<tr><td>4</td><td>Press Escape</td><td>Palette closes without selection</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-INBX-009">
+<div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-INBX-009</span><h3>Internal notes with yellow styling</h3><span class="priority p1">P1</span><span class="role-badge">Owner, Admin, Agent</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Conversation selected.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Click note toggle (StickyNote icon) in compose area</td><td>Compose area background turns yellow. Placeholder changes to "Internal note..."</td></tr>
+<tr><td>2</td><td>Type note and send</td><td>Note appears in thread with yellow background, "Internal Note" label, author name</td></tr>
+<tr><td>3</td><td>Verify notes visible in sidebar</td><td>Notes section in contact info sidebar shows all notes with timestamps</td></tr>
+<tr><td>4</td><td>Verify notes are NOT sent to WhatsApp</td><td>Notes are internal only. No outbound WhatsApp message created.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-INBX-010">
+<div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-INBX-010</span><h3>Agent assignment dropdown</h3><span class="priority p1">P1</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Multiple team members exist. Conversation selected.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Open agent assignment dropdown in sidebar</td><td>Team members listed with online status dots and conversation counts</td></tr>
+<tr><td>2</td><td>Select an agent</td><td>PATCH /api/v1/conversations/:id/assign called. System message added. Status auto-changes.</td></tr>
+<tr><td>3</td><td>Select "Unassign"</td><td>Conversation unassigned. Appears in unassigned queue.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-INBX-011">
+<div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-INBX-011</span><h3>Status change dropdown</h3><span class="priority p1">P1</span><span class="role-badge">Owner, Admin, Agent</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Conversation selected.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Click status dropdown in contact sidebar</td><td>4 options: Open (emerald), Bot Active (blue), Pending (amber), Resolved (gray)</td></tr>
+<tr><td>2</td><td>Select "Resolved"</td><td>PATCH /api/v1/conversations/:id/status. Compose area disabled. Status updated.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-INBX-012">
+<div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-INBX-012</span><h3>Media message display</h3><span class="priority p1">P1</span><span class="role-badge">All Roles</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Conversation has media messages (image, document, audio).</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Observe image message in thread</td><td>Image thumbnail displayed inline with click-to-expand</td></tr>
+<tr><td>2</td><td>Observe document message</td><td>Document link with filename and download icon</td></tr>
+<tr><td>3</td><td>Observe audio message</td><td>Audio player with play/pause controls</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-INBX-013">
+<div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-INBX-013</span><h3>Typing indicator</h3><span class="priority p2">P2</span><span class="role-badge">All Roles</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Socket.io connected. Both parties in conversation.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>User starts typing in compose area</td><td>typing:start event emitted (debounced 3s)</td></tr>
+<tr><td>2</td><td>Other party sees typing indicator</td><td>Animated dots indicator appears below messages</td></tr>
+<tr><td>3</td><td>User stops typing for 3 seconds</td><td>typing:stop event. Indicator disappears.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-INBX-014">
+<div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-INBX-014</span><h3>Full-text message search with highlights</h3><span class="priority p1">P1</span><span class="role-badge">All Roles</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Tenant has messages with searchable content.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Click search icon in inbox header</td><td>Search panel opens with input field</td></tr>
+<tr><td>2</td><td>Type search query (3+ chars)</td><td>Debounced search (500ms). Results appear with highlighted matching text (&lt;mark&gt; tags).</td></tr>
+<tr><td>3</td><td>Click search result</td><td>Navigates to conversation and scrolls to matching message</td></tr>
+<tr><td>4</td><td>Observe recent searches</td><td>Last 5 searches stored in localStorage and shown as suggestions</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-INBX-015">
+<div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-INBX-015</span><h3>Contact info sidebar</h3><span class="priority p1">P1</span><span class="role-badge">All Roles</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Conversation selected with associated contact.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Observe right panel (desktop)</td><td>Contact info: name, phone, email, tags, custom fields (industry, city, source)</td></tr>
+<tr><td>2</td><td>Check collapsible sections</td><td>Sections expand/collapse: Contact Details, Tags, Custom Fields, Notes, Activity</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-INBX-016">
+<div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-INBX-016</span><h3>Real-time new message via Socket.io</h3><span class="priority p0">P0</span><span class="role-badge">All Roles</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Socket.io connected. Viewing inbox.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Inbound message received via WhatsApp webhook</td><td>message:new Socket.io event emitted to conversation room</td></tr>
+<tr><td>2</td><td>Observe conversation list</td><td>Conversation moves to top of list. Unread count incremented.</td></tr>
+<tr><td>3</td><td>If viewing that conversation</td><td>New message appended to thread in real-time. No page refresh.</td></tr>
+<tr><td>4</td><td>Verify deduplication</td><td>Same message ID received twice does not create duplicate bubble</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-INBX-017">
+<div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-INBX-017</span><h3>Token debit on message send</h3><span class="priority p0">P0</span><span class="role-badge">Owner, Admin, Agent</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Token balance known. Conversation open.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Send a message</td><td>1 token debited (human_message category). Transaction recorded in billing.</td></tr>
+<tr><td>2</td><td>Send with 0 token balance</td><td>402 error: "Insufficient credits". Message not sent. User prompted to buy tokens.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-INBX-018">
+<div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-INBX-018</span><h3>Mobile inbox - single panel view</h3><span class="priority p1">P1</span><span class="role-badge">All Roles</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Mobile viewport.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Navigate to /inbox on mobile</td><td>Only conversation list visible (single panel)</td></tr>
+<tr><td>2</td><td>Tap a conversation</td><td>Thread view slides in. Back button appears.</td></tr>
+<tr><td>3</td><td>Tap back button</td><td>Returns to conversation list. Contact sidebar hidden on mobile.</td></tr>
+</tbody></table></div></div>
+
+</section>
+
+<!-- Chapter 4: Contacts & CRM -->
+<section class="chapter" id="ch-ctct">
+<h2 class="chapter-title">4. Contacts & CRM</h2>
+<p class="chapter-desc">Contact management with list view, CRUD operations, CSV import/export, tags, segments, merge duplicates, and bulk operations. Route: /contacts</p>
+
+<div class="scenario" id="QB-CTCT-001">
+<div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-CTCT-001</span><h3>Contact list with pagination and search</h3><span class="priority p0">P0</span><span class="role-badge">All Roles</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Tenant has 30+ contacts.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Navigate to /contacts</td><td>Contact list loads with table view. GET /api/v1/contacts?limit=20</td></tr>
+<tr><td>2</td><td>Search by name or phone</td><td>Debounced search. Results filtered in real-time.</td></tr>
+<tr><td>3</td><td>Paginate to next page</td><td>Cursor-based pagination. Next 20 contacts loaded.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-CTCT-002">
+<div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-CTCT-002</span><h3>Create new contact</h3><span class="priority p0">P0</span><span class="role-badge">Owner, Admin, Agent</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> User has create permission.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Click "Add Contact" button</td><td>Create contact form/dialog opens</td></tr>
+<tr><td>2</td><td>Fill name, phone (+91 format), email</td><td>Zod validation on phone format (10 digits after +91)</td></tr>
+<tr><td>3</td><td>Submit form</td><td>POST /api/v1/contacts. Contact created. Toast success. List refreshed.</td></tr>
+<tr><td>4</td><td>Submit with duplicate phone</td><td>409 Conflict: "Phone already registered". Error message shown.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-CTCT-003">
+<div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-CTCT-003</span><h3>Edit existing contact</h3><span class="priority p1">P1</span><span class="role-badge">Owner, Admin, Agent</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Contact exists.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Click edit icon on contact row</td><td>Edit form opens pre-populated with current values</td></tr>
+<tr><td>2</td><td>Modify name and save</td><td>PUT /api/v1/contacts/:id. Contact updated. Toast success.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-CTCT-004">
+<div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-CTCT-004</span><h3>Delete contact</h3><span class="priority p1">P1</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Contact exists. User is Owner or Admin.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Click delete icon on contact row</td><td>Confirmation dialog: "Are you sure you want to delete this contact?"</td></tr>
+<tr><td>2</td><td>Confirm deletion</td><td>DELETE /api/v1/contacts/:id. Contact removed. Toast success.</td></tr>
+<tr><td>3</td><td>Verify conversation preserved</td><td>Conversation history remains (contact_id SET NULL on conversation)</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-CTCT-005">
+<div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-CTCT-005</span><h3>Import contacts from CSV</h3><span class="priority p0">P0</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> CSV file with columns: name, phone, email, tags.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Click "Import" button</td><td>File upload dialog opens. Accepts .csv files.</td></tr>
+<tr><td>2</td><td>Upload valid CSV with 50 contacts</td><td>POST /api/v1/contacts/import. Progress shown. Success count displayed.</td></tr>
+<tr><td>3</td><td>Upload CSV with invalid phone numbers</td><td>Partial import. Error report: "3 rows failed validation". Successful rows imported.</td></tr>
+<tr><td>4</td><td>Check import history</td><td>GET /api/v1/contacts/import/history shows import jobs with status</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-CTCT-006">
+<div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-CTCT-006</span><h3>Export contacts to CSV</h3><span class="priority p1">P1</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Contacts exist.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Click "Export" button</td><td>GET /api/v1/contacts/export. CSV file downloaded.</td></tr>
+<tr><td>2</td><td>Open CSV</td><td>All contacts with columns: name, phone, email, tags, created_at</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-CTCT-007">
+<div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-CTCT-007</span><h3>Tag management (CRUD)</h3><span class="priority p1">P1</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Contacts page loaded.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Create new tag with name and color</td><td>POST /api/v1/contacts/tags. Tag created. Appears in tag list.</td></tr>
+<tr><td>2</td><td>Edit tag name</td><td>PUT /api/v1/contacts/tags/:id. Tag updated across all contacts.</td></tr>
+<tr><td>3</td><td>Delete tag</td><td>DELETE /api/v1/contacts/tags/:id. Tag removed from all contacts.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-CTCT-008">
+<div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-CTCT-008</span><h3>Segment creation and filtering</h3><span class="priority p1">P1</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Contacts with various tags and custom fields exist.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Click "Create Segment"</td><td>Segment builder opens with filter criteria options</td></tr>
+<tr><td>2</td><td>Set criteria: tag = "VIP" AND last_contacted within 30 days</td><td>Preview shows matching contact count</td></tr>
+<tr><td>3</td><td>Save segment</td><td>POST /api/v1/contacts/segments. Segment appears in sidebar. Can be used for campaigns.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-CTCT-009">
+<div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-CTCT-009</span><h3>Bulk tag operation</h3><span class="priority p2">P2</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Multiple contacts in list.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Select 5 contacts via checkboxes</td><td>Bulk action toolbar appears with tag/delete options</td></tr>
+<tr><td>2</td><td>Click "Add Tag" and select tag</td><td>POST /api/v1/contacts/bulk/tag. All 5 contacts tagged. Toast success.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-CTCT-010">
+<div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-CTCT-010</span><h3>Bulk delete contacts</h3><span class="priority p2">P2</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Multiple contacts selected.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Select contacts and click "Delete"</td><td>Confirmation: "Delete 5 contacts? This cannot be undone."</td></tr>
+<tr><td>2</td><td>Confirm</td><td>POST /api/v1/contacts/bulk/delete. Contacts removed. Count updated.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-CTCT-011">
+<div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-CTCT-011</span><h3>Merge duplicate contacts</h3><span class="priority p2">P2</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Duplicate contacts exist (same phone/email).</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Select 2 duplicate contacts and click "Merge"</td><td>Merge dialog: shows fields from both contacts, user picks primary values</td></tr>
+<tr><td>2</td><td>Choose primary record and confirm merge</td><td>POST /api/v1/contacts/merge. Single contact remains. Conversation histories combined.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-CTCT-012">
+<div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-CTCT-012</span><h3>Contact stats overview</h3><span class="priority p2">P2</span><span class="role-badge">All Roles</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Contacts exist with various tags and segments.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Observe stats section on contacts page</td><td>GET /api/v1/contacts/stats. Shows: total contacts, segments count, tags count, recent additions.</td></tr>
+</tbody></table></div></div>
+
+</section>
+
+<!-- Chapter 5: Campaigns -->
+<section class="chapter" id="ch-camp">
+<h2 class="chapter-title">5. Campaigns & Broadcasts</h2>
+<p class="chapter-desc">Broadcast campaigns with template selection, audience segmentation, scheduling, delivery tracking, retargeting, and analytics. Route: /campaigns</p>
+
+<div class="scenario" id="QB-CAMP-001"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-CAMP-001</span><h3>Campaign list with status filters</h3><span class="priority p0">P0</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Campaigns exist in various statuses.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Navigate to /campaigns</td><td>Campaign list loads with status filter tabs (Draft, Scheduled, Completed, All)</td></tr>
+<tr><td>2</td><td>Click on a campaign</td><td>Campaign detail view with delivery stats (sent, delivered, read, failed)</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-CAMP-002"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-CAMP-002</span><h3>Create campaign wizard</h3><span class="priority p0">P0</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Approved WhatsApp templates exist. Contacts with segments exist.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Click "New Campaign"</td><td>Multi-step wizard: Name > Template > Audience > Schedule > Review</td></tr>
+<tr><td>2</td><td>Enter campaign name and proceed</td><td>Template selection step with search and category filter</td></tr>
+<tr><td>3</td><td>Select template and fill variables</td><td>Audience selection: choose segment or all contacts</td></tr>
+<tr><td>4</td><td>Select audience segment</td><td>Shows recipient count. Schedule options: Send Now or Schedule Later.</td></tr>
+<tr><td>5</td><td>Click "Send Now" on review step</td><td>POST /api/v1/campaigns/:id/send. Campaign status = sending. Redirected to campaign detail.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-CAMP-003"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-CAMP-003</span><h3>Schedule campaign for later</h3><span class="priority p1">P1</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Campaign created. Schedule step.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Select "Schedule Later" and pick date/time</td><td>POST /api/v1/campaigns/:id/schedule. Status = scheduled. scheduledAt set.</td></tr>
+<tr><td>2</td><td>Verify in campaign list</td><td>Campaign shows "Scheduled" badge with date/time</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-CAMP-004"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-CAMP-004</span><h3>Cancel scheduled campaign</h3><span class="priority p1">P1</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Campaign scheduled but not yet sent.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Click "Cancel" on scheduled campaign</td><td>POST /api/v1/campaigns/:id/cancel. Status = cancelled. No messages sent.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-CAMP-005"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-CAMP-005</span><h3>Campaign analytics view</h3><span class="priority p1">P1</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Campaign completed with delivery data.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>View campaign detail</td><td>Delivery funnel: Sent > Delivered > Read > Failed with counts and percentages</td></tr>
+<tr><td>2</td><td>View recipient list</td><td>GET /api/v1/campaigns/:id/recipients. Per-recipient status shown.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-CAMP-006"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-CAMP-006</span><h3>Token debit per recipient</h3><span class="priority p0">P0</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Campaign with 10 recipients. Token balance sufficient.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Send campaign to 10 recipients</td><td>10 tokens debited (1 per recipient, campaign category). Transaction recorded.</td></tr>
+<tr><td>2</td><td>Send with insufficient balance</td><td>402 error: "Insufficient credits for campaign". Campaign not sent.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-CAMP-007"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-CAMP-007</span><h3>Retarget failed deliveries</h3><span class="priority p2">P2</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Campaign completed with some failed deliveries.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Click "Retarget Failed" on campaign</td><td>POST /api/v1/campaigns/:id/retarget. New campaign created targeting failed recipients only.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-CAMP-008"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-CAMP-008</span><h3>Export campaign results</h3><span class="priority p2">P2</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Campaign completed.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Click "Export" on campaign detail</td><td>GET /api/v1/campaigns/:id/export. CSV with recipient, status, timestamp</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-CAMP-009"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-CAMP-009</span><h3>Campaign segment management</h3><span class="priority p2">P2</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Contacts exist.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Create campaign segment</td><td>POST /api/v1/campaigns/segments. Segment with filter criteria saved.</td></tr>
+<tr><td>2</td><td>Use segment in campaign wizard</td><td>Segment appears in audience selection. Matching contacts auto-selected.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-CAMP-010"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-CAMP-010</span><h3>Campaign analytics overview page</h3><span class="priority p1">P1</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Multiple campaigns completed.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Navigate to campaign analytics</td><td>GET /api/v1/campaigns/analytics. Overview: total campaigns, delivery rate, read rate, trending chart.</td></tr>
+</tbody></table></div></div>
+</section>
+
+<!-- Chapter 6: Leads Pipeline -->
+<section class="chapter" id="ch-lead">
+<h2 class="chapter-title">6. Leads Pipeline</h2>
+<p class="chapter-desc">AI-powered lead pipeline with kanban board, lead scoring (hot/warm/cold), stage management, timeline, notes. Route: /leads</p>
+
+<div class="scenario" id="QB-LEAD-001"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-LEAD-001</span><h3>Kanban board loads with pipeline stages</h3><span class="priority p0">P0</span><span class="role-badge">Owner, Admin, Agent</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Leads exist in various stages.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Navigate to /leads</td><td>Kanban board loads with columns: New, Contacted, Qualified, Proposal, Won, Lost</td></tr>
+<tr><td>2</td><td>Observe lead cards</td><td>Each card: name, company, temperature badge (hot=amber, warm=sage, cold=slate), score</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-LEAD-002"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-LEAD-002</span><h3>Create new lead</h3><span class="priority p0">P0</span><span class="role-badge">Owner, Admin, Agent</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Leads page loaded.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Click "Add Lead"</td><td>Create dialog: name, phone, email, company, source, stage selector</td></tr>
+<tr><td>2</td><td>Fill required fields and submit</td><td>POST /api/v1/leads. Lead created in selected stage. Card appears in kanban.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-LEAD-003"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-LEAD-003</span><h3>Move lead between stages</h3><span class="priority p0">P0</span><span class="role-badge">Owner, Admin, Agent</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Lead exists in "New" stage.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Drag lead card from "New" to "Contacted"</td><td>POST /api/v1/leads/:id/move. Stage updated. Timeline event added.</td></tr>
+<tr><td>2</td><td>Or click lead > change stage in detail dialog</td><td>Same API call. Stage dropdown updates. Card moves to new column.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-LEAD-004"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-LEAD-004</span><h3>AI lead scoring (hot/warm/cold)</h3><span class="priority p1">P1</span><span class="role-badge">All Roles</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Lead has conversation history for scoring.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Observe lead score on card</td><td>Numeric score (0-100) and temperature badge (hot >70, warm 40-70, cold <40)</td></tr>
+<tr><td>2</td><td>Click "Re-score" on lead detail</td><td>POST /api/v1/leads/:id/score. AI re-evaluates based on conversation signals.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-LEAD-005"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-LEAD-005</span><h3>Add note to lead</h3><span class="priority p1">P1</span><span class="role-badge">Owner, Admin, Agent</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Lead detail open.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Click "Add Note" in lead detail</td><td>Note input area appears</td></tr>
+<tr><td>2</td><td>Enter note and save</td><td>POST /api/v1/leads/:id/notes. Note saved with author name and timestamp.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-LEAD-006"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-LEAD-006</span><h3>Lead timeline view</h3><span class="priority p1">P1</span><span class="role-badge">All Roles</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Lead has stage changes, notes, conversations.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Open lead detail > Timeline tab</td><td>GET /api/v1/leads/:id/timeline. Chronological list of events.</td></tr>
+<tr><td>2</td><td>Observe event types</td><td>Stage changes, notes added, conversations, score updates all shown with timestamps</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-LEAD-007"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-LEAD-007</span><h3>Lead list view (table)</h3><span class="priority p1">P1</span><span class="role-badge">All Roles</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Leads exist.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Toggle from Kanban to List view</td><td>Table view: name, company, stage, score, temperature, assignee, last contact</td></tr>
+<tr><td>2</td><td>Sort by score descending</td><td>Hottest leads at top. Column header shows sort indicator.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-LEAD-008"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-LEAD-008</span><h3>Lead detail dialog</h3><span class="priority p1">P1</span><span class="role-badge">All Roles</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Lead exists.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Click lead card/row</td><td>Detail dialog opens with tabs: Overview, Timeline, Notes, Conversation</td></tr>
+<tr><td>2</td><td>Edit lead fields in Overview</td><td>PUT /api/v1/leads/:id. Fields updated. Toast success.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-LEAD-009"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-LEAD-009</span><h3>Bulk stage move</h3><span class="priority p2">P2</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Multiple leads selected in list view.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Select 5 leads and click "Move to Stage"</td><td>POST /api/v1/leads/bulk-update. All leads moved. Kanban refreshed.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-LEAD-010"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-LEAD-010</span><h3>Export leads CSV</h3><span class="priority p2">P2</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Leads exist.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Click "Export" on leads page</td><td>GET /api/v1/leads/export. CSV downloaded with all lead fields.</td></tr>
+</tbody></table></div></div>
+</section>
+
+<!-- Chapter 7: AI Training -->
+<section class="chapter" id="ch-aitr">
+<h2 class="chapter-title">7. AI Training & Knowledge Base</h2>
+<p class="chapter-desc">5-tab AI training hub: Persona configuration, Knowledge Base document management, FAQ CRUD, Test Chat with AI, Analytics dashboard. Route: /ai-training</p>
+
+<div class="scenario" id="QB-AITR-001"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-AITR-001</span><h3>AI persona configuration</h3><span class="priority p0">P0</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> User is Owner or Admin.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Navigate to /ai-training > Persona tab</td><td>GET /api/v1/ai/persona. Current persona config loaded: name, system prompt, greeting, tone, language.</td></tr>
+<tr><td>2</td><td>Update persona name and system prompt</td><td>PUT /api/v1/ai/persona. Persona updated. Toast success.</td></tr>
+<tr><td>3</td><td>Set greeting message</td><td>This message sent when AI first engages with a contact</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-AITR-002"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-AITR-002</span><h3>Toggle AI agent on/off</h3><span class="priority p0">P0</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> AI agent configured.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Click AI toggle switch in dashboard header</td><td>POST /api/v1/ai/persona/toggle. AI isActive toggled.</td></tr>
+<tr><td>2</td><td>Toggle OFF</td><td>All new conversations go to "open" (not "bot_active"). No auto-responses.</td></tr>
+<tr><td>3</td><td>Toggle ON</td><td>New conversations get AI handling. Existing open conversations unchanged.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-AITR-003"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-AITR-003</span><h3>Upload knowledge document</h3><span class="priority p0">P0</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> AI Training > Knowledge Base tab.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Click "Upload Document"</td><td>File picker: accepts PDF, TXT, DOCX</td></tr>
+<tr><td>2</td><td>Upload a PDF document</td><td>POST /api/v1/ai/documents. Status = "processing". Document chunked + embedded.</td></tr>
+<tr><td>3</td><td>Wait for processing</td><td>Status changes to "ready". Chunk count displayed. Document searchable by AI.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-AITR-004"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-AITR-004</span><h3>Delete knowledge document</h3><span class="priority p1">P1</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Document uploaded and processed.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Click delete on document</td><td>Confirmation dialog. DELETE /api/v1/ai/documents/:id.</td></tr>
+<tr><td>2</td><td>Confirm deletion</td><td>Document + all chunks deleted. AI no longer references this content.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-AITR-005"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-AITR-005</span><h3>FAQ entry CRUD</h3><span class="priority p1">P1</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> AI Training > FAQ tab.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Click "Add FAQ"</td><td>Form: question, answer, category, priority</td></tr>
+<tr><td>2</td><td>Fill and submit</td><td>POST /api/v1/ai/faq. FAQ created. Listed in FAQ table.</td></tr>
+<tr><td>3</td><td>Edit FAQ answer</td><td>PUT /api/v1/ai/faq/:id. Answer updated.</td></tr>
+<tr><td>4</td><td>Delete FAQ</td><td>DELETE /api/v1/ai/faq/:id. FAQ removed.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-AITR-006"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-AITR-006</span><h3>Import FAQs from CSV</h3><span class="priority p2">P2</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> CSV with question,answer columns.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Click "Import FAQs" and upload CSV</td><td>POST /api/v1/ai/faq/import. FAQs created. Count shown.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-AITR-007"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-AITR-007</span><h3>Test chat with AI agent</h3><span class="priority p0">P0</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> AI persona configured. Knowledge base uploaded. AI Training > Test Chat tab.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Type a question in test chat</td><td>POST /api/v1/ai/test. AI responds using RAG pipeline (persona + knowledge base + FAQ).</td></tr>
+<tr><td>2</td><td>Observe confidence badge</td><td>Confidence score shown: High (green, >0.8), Medium (amber, 0.5-0.8), Low (red, <0.5)</td></tr>
+<tr><td>3</td><td>Observe source references</td><td>Sources panel shows which documents/FAQs the AI used for its response</td></tr>
+<tr><td>4</td><td>Try suggested questions</td><td>Clickable suggested questions provided by AI for further testing</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-AITR-008"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-AITR-008</span><h3>AI analytics dashboard</h3><span class="priority p1">P1</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> AI has processed conversations.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Navigate to AI Training > Analytics tab</td><td>GET /api/v1/ai/analytics. Charts with period selector (7d/30d/90d).</td></tr>
+<tr><td>2</td><td>Observe metrics</td><td>Resolution rate, avg confidence, handoff rate, top topics, response time</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-AITR-009"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-AITR-009</span><h3>Scrape URL for knowledge base</h3><span class="priority p2">P2</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> URL accessible and robots.txt allows scraping.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Enter URL in scrape input</td><td>POST /api/v1/ai/documents/scrape. Content extracted, chunked, embedded.</td></tr>
+<tr><td>2</td><td>Enter URL blocked by robots.txt</td><td>Error: "URL blocked by robots.txt". No content scraped.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-AITR-010"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-AITR-010</span><h3>AI settings (confidence threshold)</h3><span class="priority p1">P1</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> AI persona active.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Navigate to AI settings</td><td>GET /api/v1/ai/settings. Current threshold and configs shown.</td></tr>
+<tr><td>2</td><td>Adjust confidence threshold slider</td><td>PUT /api/v1/ai/settings. Below-threshold queries trigger human handoff.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-AITR-011"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-AITR-011</span><h3>AI unconfigured state</h3><span class="priority p2">P2</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> No persona configured. No documents uploaded.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Navigate to /ai-training</td><td>Empty state CTA: "Configure your AI agent to start automating conversations"</td></tr>
+<tr><td>2</td><td>Navigate to dashboard > AI resolution widget</td><td>Widget shows "AI not configured" fallback with link to /ai-training</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-AITR-012"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-AITR-012</span><h3>Knowledge base document list</h3><span class="priority p1">P1</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Multiple documents uploaded.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>View Knowledge Base tab</td><td>GET /api/v1/ai/documents. Table: title, source type, status, chunk count, uploaded date</td></tr>
+<tr><td>2</td><td>Observe status badges</td><td>Pending (amber), Processing (blue), Ready (green), Failed (red)</td></tr>
+</tbody></table></div></div>
+</section>
+
+<!-- Chapter 8: Flow Builder -->
+<section class="chapter" id="ch-flow">
+<h2 class="chapter-title">8. Visual Flow Builder</h2>
+<p class="chapter-desc">Drag-and-drop visual chatbot builder with node types, flow versioning, test execution, and analytics. Routes: /flows, /flows/[id]</p>
+
+<div class="scenario" id="QB-FLOW-001"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-FLOW-001</span><h3>Flow list with stats</h3><span class="priority p0">P0</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Flows exist.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Navigate to /flows</td><td>Flow list with cards. Each card: name, status (draft/published), execution count, last edited.</td></tr>
+<tr><td>2</td><td>Observe stats section</td><td>GET /api/v1/flows/stats. Total flows, published count, execution count.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-FLOW-002"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-FLOW-002</span><h3>Create new flow</h3><span class="priority p0">P0</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Flows page loaded.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Click "Create Flow"</td><td>Create dialog: name, description, trigger type (message/keyword/event)</td></tr>
+<tr><td>2</td><td>Submit</td><td>POST /api/v1/flows. Flow created. Redirected to /flows/[id] editor.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-FLOW-003"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-FLOW-003</span><h3>Flow editor canvas</h3><span class="priority p0">P0</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Flow exists. Editor loaded at /flows/[id].</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Observe editor layout</td><td>Left: node palette. Center: canvas area. Right: node config panel.</td></tr>
+<tr><td>2</td><td>Drag node from palette to canvas</td><td>Node placed on canvas. Connection points visible.</td></tr>
+<tr><td>3</td><td>Connect two nodes</td><td>Edge drawn between output and input ports. PUT /api/v1/flows/:id auto-saves.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-FLOW-004"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-FLOW-004</span><h3>Configure flow nodes</h3><span class="priority p1">P1</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Nodes on canvas.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Click node on canvas</td><td>Config panel opens on right with node-specific settings</td></tr>
+<tr><td>2</td><td>Configure message node: set text content</td><td>Message content saved. Preview shown on node.</td></tr>
+<tr><td>3</td><td>Configure condition node: set condition rules</td><td>Branching paths created based on conditions</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-FLOW-005"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-FLOW-005</span><h3>Publish flow</h3><span class="priority p0">P0</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Flow has valid nodes and connections.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Click "Publish" button</td><td>POST /api/v1/flows/:id/publish. Status = published. Version incremented.</td></tr>
+<tr><td>2</td><td>Flow now active for matching triggers</td><td>Inbound messages matching trigger execute the flow</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-FLOW-006"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-FLOW-006</span><h3>Unpublish flow</h3><span class="priority p1">P1</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Flow is published.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Click "Unpublish"</td><td>POST /api/v1/flows/:id/unpublish. Status = draft. Flow no longer triggers.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-FLOW-007"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-FLOW-007</span><h3>Test execute flow</h3><span class="priority p1">P1</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Flow with nodes configured.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Click "Test" button in editor</td><td>Test panel opens. Input simulation form shown.</td></tr>
+<tr><td>2</td><td>Enter test input and run</td><td>POST /api/v1/flows/:id/test. Execution trace shown step-by-step.</td></tr>
+<tr><td>3</td><td>Observe node highlighting</td><td>Each executed node highlighted in sequence on canvas</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-FLOW-008"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-FLOW-008</span><h3>Flow version history</h3><span class="priority p2">P2</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Flow published multiple times.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Open version history panel</td><td>GET /api/v1/flows/:id/versions. List of versions with timestamps.</td></tr>
+<tr><td>2</td><td>Click older version</td><td>Canvas shows that version's nodes/edges (read-only preview)</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-FLOW-009"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-FLOW-009</span><h3>Duplicate flow</h3><span class="priority p2">P2</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Flow exists.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Click "Duplicate" on flow card</td><td>POST /api/v1/flows/:id/duplicate. Copy created with " (Copy)" suffix. Status = draft.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-FLOW-010"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-FLOW-010</span><h3>Flow analytics</h3><span class="priority p2">P2</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Flow has execution history.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>View flow analytics</td><td>GET /api/v1/flows/:id/analytics. Execution count, success rate, avg duration, drop-off points.</td></tr>
+</tbody></table></div></div>
+</section>
+
+<!-- Chapter 9: Billing & Payments -->
+<section class="chapter" id="ch-bill">
+<h2 class="chapter-title">9. Billing & Payments</h2>
+<p class="chapter-desc">Token wallet, subscription plans, Razorpay checkout, transaction history, invoices with GST, usage analytics, auto-recharge. Route: /billing, /pricing</p>
+
+<div class="scenario" id="QB-BILL-001"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-BILL-001</span><h3>Wallet balance display</h3><span class="priority p0">P0</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> User logged in. Billing page.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Navigate to /billing</td><td>GET /api/v1/billing/wallet. Wallet card shows: balance, total credited, total debited.</td></tr>
+<tr><td>2</td><td>Observe Indian number formatting</td><td>Balances formatted: 1,23,456 (Indian numbering system)</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-BILL-002"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-BILL-002</span><h3>View subscription plans</h3><span class="priority p0">P0</span><span class="role-badge">All Roles</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Plans API available.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Navigate to /pricing (public) or /billing</td><td>3 plans displayed: Starter (Rs.10,999/mo), Growth (Rs.34,000/mo), Enterprise (Rs.1,00,000/mo)</td></tr>
+<tr><td>2</td><td>Observe "Popular" badge</td><td>Growth plan marked as popular/recommended</td></tr>
+<tr><td>3</td><td>Observe token allocation</td><td>Starter: 3,333 tokens, Growth: 13,000, Enterprise: 45,000</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-BILL-003"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-BILL-003</span><h3>Buy tokens / subscribe</h3><span class="priority p0">P0</span><span class="role-badge">Owner</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> User is tenant owner. Razorpay configured.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Click "Buy Tokens" or "Subscribe"</td><td>Buy tokens dialog opens with plan cards</td></tr>
+<tr><td>2</td><td>Select a plan</td><td>POST /api/v1/billing/create-order. Razorpay order created.</td></tr>
+<tr><td>3</td><td>Complete Razorpay checkout</td><td>POST /api/v1/billing/verify-payment. Tokens credited. Transaction recorded.</td></tr>
+<tr><td>4</td><td>Observe wallet update</td><td>Balance increases by plan's token count. Success toast.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-BILL-004"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-BILL-004</span><h3>Subscription management</h3><span class="priority p1">P1</span><span class="role-badge">Owner</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Active subscription exists.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>View current subscription</td><td>GET /api/v1/billing/subscription. Plan name, status, current period, next billing date.</td></tr>
+<tr><td>2</td><td>Cancel subscription</td><td>POST /api/v1/billing/subscription/cancel. Status = cancelled. Access until period end.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-BILL-005"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-BILL-005</span><h3>Transaction history with filters</h3><span class="priority p1">P1</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Transactions exist.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Navigate to Billing > Transactions tab</td><td>GET /api/v1/billing/transactions. Table: date, type (credit/debit), amount, description, balance.</td></tr>
+<tr><td>2</td><td>Filter by type "debit"</td><td>Only debit transactions shown</td></tr>
+<tr><td>3</td><td>Paginate</td><td>Cursor-based pagination. Next page loads.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-BILL-006"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-BILL-006</span><h3>Export transactions CSV</h3><span class="priority p2">P2</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Transactions exist.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Click "Export CSV"</td><td>GET /api/v1/billing/transactions/export. CSV file downloaded.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-BILL-007"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-BILL-007</span><h3>Invoice list with GST</h3><span class="priority p1">P1</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Payments completed. Invoices generated.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Navigate to Billing > Invoices tab</td><td>GET /api/v1/billing/invoices. Invoice table: number, date, amount, GST, total, status.</td></tr>
+<tr><td>2</td><td>Observe GST calculation</td><td>18% GST applied. Subtotal + GST = Total shown separately.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-BILL-008"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-BILL-008</span><h3>Billing settings (GSTIN, auto-recharge)</h3><span class="priority p1">P1</span><span class="role-badge">Owner</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Billing > Settings tab.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Enter GSTIN</td><td>PUT /api/v1/billing/settings. GSTIN saved. Appears on invoices.</td></tr>
+<tr><td>2</td><td>Enable auto-recharge</td><td>Toggle on. Select pack for auto-recharge. Low balance threshold set.</td></tr>
+<tr><td>3</td><td>Save settings</td><td>Settings persisted. Auto-recharge triggers when balance < threshold.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-BILL-009"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-BILL-009</span><h3>Token usage analytics</h3><span class="priority p1">P1</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Token usage data exists.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Navigate to Billing > Usage tab</td><td>GET /api/v1/billing/usage. Daily breakdown chart with period selector (7d/30d).</td></tr>
+<tr><td>2</td><td>Observe stacked bar chart</td><td>Categories: AI messages, human messages, campaigns. Per-day breakdown.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-BILL-010"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-BILL-010</span><h3>Low balance warning</h3><span class="priority p1">P1</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Balance dropping below threshold.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Balance falls below 500</td><td>Yellow banner in dashboard shell: "Token balance running low"</td></tr>
+<tr><td>2</td><td>Balance falls below 100</td><td>Red banner: "Token balance critically low". Email notification sent.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-BILL-011"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-BILL-011</span><h3>Public pricing page</h3><span class="priority p1">P1</span><span class="role-badge">Unauthenticated</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Not logged in.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Navigate to /pricing</td><td>Page loads without auth. Hero, 3 plan cards, token cost table, FAQ, CTA.</td></tr>
+<tr><td>2</td><td>Click "Get Started" CTA</td><td>Redirects to /signup</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-BILL-012"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-BILL-012</span><h3>Razorpay webhook payment confirmation</h3><span class="priority p0">P0</span><span class="role-badge">System</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Razorpay webhook configured. Payment initiated.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Razorpay sends payment.captured webhook</td><td>POST /api/v1/webhooks/razorpay. HMAC-SHA256 signature verified.</td></tr>
+<tr><td>2</td><td>Observe token credit</td><td>Tokens credited to tenant wallet. Transaction recorded. Invoice created.</td></tr>
+<tr><td>3</td><td>Send duplicate webhook</td><td>Idempotency: second webhook ignored (event ID already processed).</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-BILL-013"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-BILL-013</span><h3>Razorpay webhook with invalid signature</h3><span class="priority p0">P0</span><span class="role-badge">System</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Webhook endpoint active.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Send POST to /api/v1/webhooks/razorpay with wrong signature</td><td>401 Unauthorized. Payment not processed. Event logged as rejected.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-BILL-014"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-BILL-014</span><h3>Viewer role cannot access billing</h3><span class="priority p1">P1</span><span class="role-badge">Viewer</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> User logged in as Viewer role.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Navigate to /billing</td><td>403 or restricted view. Cannot buy tokens or change settings.</td></tr>
+</tbody></table></div></div>
+</section>
+
+<!-- Chapter 10: Analytics -->
+<section class="chapter" id="ch-anlt">
+<h2 class="chapter-title">10. Analytics</h2>
+<p class="chapter-desc">Multi-tab analytics: overview, conversation, agent performance, AI quality, business metrics, campaign analytics, advanced (cohorts, funnels, churn). Route: /analytics</p>
+
+<div class="scenario" id="QB-ANLT-001"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-ANLT-001</span><h3>Analytics overview dashboard</h3><span class="priority p0">P0</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Data exists across all categories.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Navigate to /analytics</td><td>GET /api/v1/analytics/overview. Summary cards for all categories.</td></tr>
+<tr><td>2</td><td>Observe tab navigation</td><td>Tabs: Overview, Conversations, Agents, AI Quality, Business, Campaigns, Advanced</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-ANLT-002"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-ANLT-002</span><h3>Conversation analytics with daily breakdown</h3><span class="priority p1">P1</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Conversations exist with dates.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Click Conversations tab</td><td>GET /api/v1/analytics/conversations. Daily chart, response times, resolution rates.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-ANLT-003"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-ANLT-003</span><h3>Agent performance leaderboard</h3><span class="priority p1">P1</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Multiple agents with activity.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Click Agents tab</td><td>GET /api/v1/analytics/agents. Leaderboard: name, conversations handled, avg response time, satisfaction.</td></tr>
+<tr><td>2</td><td>Click agent name</td><td>GET /api/v1/analytics/agents/:id. Individual detail with daily breakdown.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-ANLT-004"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-ANLT-004</span><h3>AI quality metrics</h3><span class="priority p1">P1</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> AI agent active with response data.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Click AI Quality tab</td><td>GET /api/v1/analytics/ai-quality. Confidence distribution, handoff reasons, top topics chart.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-ANLT-005"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-ANLT-005</span><h3>Business analytics</h3><span class="priority p1">P1</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Business operations data exists.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Click Business tab</td><td>GET /api/v1/analytics/business. Messages sent/received, credits consumed, active contacts trend.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-ANLT-006"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-ANLT-006</span><h3>Export analytics CSV</h3><span class="priority p2">P2</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Analytics data loaded.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Click "Export" button</td><td>GET /api/v1/analytics/export. CSV file with current tab's data.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-ANLT-007"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-ANLT-007</span><h3>Cohort analysis (Advanced)</h3><span class="priority p2">P2</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Tenants with cohort data.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Click Advanced tab > Cohorts</td><td>GET /api/v1/analytics/advanced/cohorts. Heatmap table showing retention rates by cohort.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-ANLT-008"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-ANLT-008</span><h3>Funnel tracking (Advanced)</h3><span class="priority p2">P2</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Funnel data exists.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Click Advanced > Funnels</td><td>GET /api/v1/analytics/advanced/funnels. Funnel chart with step-by-step conversion rates.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-ANLT-009"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-ANLT-009</span><h3>Churn predictions (Advanced)</h3><span class="priority p2">P2</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Sufficient historical data for predictions.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Click Advanced > Churn Predictions</td><td>GET /api/v1/analytics/advanced/churn-predictions. Table: tenant, risk score, last active, predicted churn date.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-ANLT-010"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-ANLT-010</span><h3>Campaign analytics tab</h3><span class="priority p1">P1</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Campaigns completed.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Click Campaigns tab</td><td>GET /api/v1/analytics/campaigns. Monthly breakdown, delivery rate trend, top campaigns.</td></tr>
+</tbody></table></div></div>
+</section>
+
+<!-- Chapter 11: Settings -->
+<section class="chapter" id="ch-sett">
+<h2 class="chapter-title">11. Settings & WhatsApp</h2>
+<p class="chapter-desc">Settings hub, WhatsApp connection (5 tabs), API key management, outbound webhooks, multi-number support, notification/security preferences, audit log. Routes: /settings, /settings/whatsapp, /settings/api-webhooks</p>
+
+<div class="scenario" id="QB-SETT-001"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-SETT-001</span><h3>Settings hub navigation</h3><span class="priority p1">P1</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> User logged in as Owner or Admin.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Navigate to /settings</td><td>Settings hub with card grid: WhatsApp, Business Profile, Team, AI, Billing, API &amp; Webhooks</td></tr>
+<tr><td>2</td><td>Click each card</td><td>Navigates to corresponding settings page</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-SETT-002"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-SETT-002</span><h3>WhatsApp connection setup</h3><span class="priority p0">P0</span><span class="role-badge">Owner</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Meta Business Suite account ready. WhatsApp Cloud API access.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Navigate to /settings/whatsapp > Connection tab</td><td>Connection status card: Not Connected or Connected with phone number</td></tr>
+<tr><td>2</td><td>Click "Connect WhatsApp"</td><td>Connect form with 4-step guide: Phone Number ID, Access Token, App Secret, Webhook Verify Token</td></tr>
+<tr><td>3</td><td>Enter valid credentials and save</td><td>POST /api/v1/whatsapp/account. Connection verified. Status: Connected.</td></tr>
+<tr><td>4</td><td>Observe danger zone</td><td>Disconnect button with confirmation. Only Owner can disconnect.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-SETT-003"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-SETT-003</span><h3>Business profile editing</h3><span class="priority p1">P1</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> WhatsApp connected.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Navigate to WhatsApp > Profile tab</td><td>Form: about, description, email, industry, address, website</td></tr>
+<tr><td>2</td><td>Update fields and save</td><td>PATCH /api/v1/whatsapp/profile. Profile updated on Meta.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-SETT-004"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-SETT-004</span><h3>Messaging settings (auto-messages, business hours)</h3><span class="priority p1">P1</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> WhatsApp connected.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Navigate to WhatsApp > Messaging tab</td><td>Auto-messages: greeting message toggle + text, away message toggle + text</td></tr>
+<tr><td>2</td><td>Configure business hours (7-day schedule)</td><td>Set open/close times per day. Away message sent outside hours.</td></tr>
+<tr><td>3</td><td>Save settings</td><td>PATCH /api/v1/whatsapp/settings. Settings persisted.</td></tr>
+<tr><td>4</td><td>Observe rate limit status</td><td>Progress bar showing current usage vs. messaging limit</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-SETT-005"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-SETT-005</span><h3>Template management (CRUD + sync)</h3><span class="priority p0">P0</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> WhatsApp connected.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Navigate to WhatsApp > Templates tab</td><td>Template list with search, status/category filters, count</td></tr>
+<tr><td>2</td><td>Click "Sync from Meta"</td><td>POST /api/v1/whatsapp/templates/sync. Templates pulled from Meta Business Suite.</td></tr>
+<tr><td>3</td><td>Create new template</td><td>Form: name, category, language, header, body (with {{variables}}), footer, buttons. WhatsApp-style preview (#DCF8C6).</td></tr>
+<tr><td>4</td><td>Observe status badges</td><td>Approved (green), Pending (amber), Rejected (red)</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-SETT-006"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-SETT-006</span><h3>Webhook debug panel</h3><span class="priority p2">P2</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> WhatsApp connected. Webhooks received.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Navigate to WhatsApp > Webhooks tab</td><td>Stats: total events, success rate, endpoint status. Event log table.</td></tr>
+<tr><td>2</td><td>Click retry on failed event</td><td>Event reprocessed. Status updated.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-SETT-007"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-SETT-007</span><h3>API key creation</h3><span class="priority p1">P1</span><span class="role-badge">Owner</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> /settings/api-webhooks page.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Click "Create API Key"</td><td>Dialog: name, permissions checkboxes</td></tr>
+<tr><td>2</td><td>Submit</td><td>POST /api/v1/api-keys. Key shown ONCE (jc_test_ or jc_live_ prefix). Copy button.</td></tr>
+<tr><td>3</td><td>Close dialog and view list</td><td>Key masked (last 4 chars shown). Created date, last used, status.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-SETT-008"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-SETT-008</span><h3>API key revocation</h3><span class="priority p1">P1</span><span class="role-badge">Owner</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Active API key exists.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Click "Revoke" on API key</td><td>Confirmation dialog. DELETE /api/v1/api-keys/:id.</td></tr>
+<tr><td>2</td><td>Key revoked</td><td>Key status = revoked. API calls with this key return 401.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-SETT-009"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-SETT-009</span><h3>Outbound webhook CRUD</h3><span class="priority p1">P1</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> /settings/api-webhooks page.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Click "Add Webhook"</td><td>Form: URL, events (message.new, conversation.closed, payment.received), secret</td></tr>
+<tr><td>2</td><td>Submit</td><td>POST /api/v1/outbound-webhooks. Webhook created.</td></tr>
+<tr><td>3</td><td>Edit webhook URL</td><td>PUT /api/v1/outbound-webhooks/:id. URL updated.</td></tr>
+<tr><td>4</td><td>Delete webhook</td><td>DELETE /api/v1/outbound-webhooks/:id. Webhook removed.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-SETT-010"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-SETT-010</span><h3>Test webhook delivery</h3><span class="priority p2">P2</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Outbound webhook configured.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Click "Test" on webhook</td><td>POST /api/v1/outbound-webhooks/:id/test. Test payload sent. Response code shown.</td></tr>
+<tr><td>2</td><td>View delivery history</td><td>GET /api/v1/outbound-webhooks/:id/deliveries. Status, response code, attempts.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-SETT-011"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-SETT-011</span><h3>Multi-number management</h3><span class="priority p1">P1</span><span class="role-badge">Owner</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Primary WhatsApp connected.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Add second WhatsApp number</td><td>POST /api/v1/numbers. Second number added. Routing rules configurable.</td></tr>
+<tr><td>2</td><td>Set default number</td><td>POST /api/v1/numbers/:id/set-default. Default number used for outbound.</td></tr>
+<tr><td>3</td><td>Check number health</td><td>POST /api/v1/numbers/:id/health-check. Quality rating, status displayed.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-SETT-012"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-SETT-012</span><h3>Notification preferences</h3><span class="priority p2">P2</span><span class="role-badge">All Roles</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Settings page loaded.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Navigate to notification settings</td><td>GET /api/v1/settings/notifications. Toggle list: email, push, in-app per event type.</td></tr>
+<tr><td>2</td><td>Toggle off email notifications</td><td>PUT /api/v1/settings/notifications. No more email alerts.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-SETT-013"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-SETT-013</span><h3>Security settings</h3><span class="priority p1">P1</span><span class="role-badge">Owner</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Settings page loaded.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Navigate to security settings</td><td>GET /api/v1/settings/security. Session management, 2FA options, IP allowlist.</td></tr>
+<tr><td>2</td><td>Update security settings</td><td>PUT /api/v1/settings/security. Settings saved.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-SETT-014"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-SETT-014</span><h3>Audit log viewing</h3><span class="priority p2">P2</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Activity has been logged.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Navigate to audit log</td><td>GET /api/v1/settings/audit-log. Table: timestamp, user, action, resource, IP address.</td></tr>
+<tr><td>2</td><td>Filter by action type</td><td>Filtered results: login, settings change, data export, etc.</td></tr>
+</tbody></table></div></div>
+</section>
+
+<section class="chapter" id="ch-admin">
+<h2 class="chapter-title" onclick="toggleChapter(this)"><span class="expand-icon">&#9660;</span>12. Admin Panel</h2>
+<div class="chapter-body">
+
+<div class="scenario" id="QB-ADMN-001"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-ADMN-001</span><h3>Admin login with bcrypt credentials</h3><span class="priority p0">P0</span><span class="role-badge">SuperAdmin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Admin login page loaded (/admin/login).</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Enter admin@jarvisdaily.com and correct password</td><td>POST /api/v1/admin/login. bcrypt.compare() validates. JWT returned. Redirect to /admin/dashboard.</td></tr>
+<tr><td>2</td><td>Enter wrong password</td><td>401 INVALID_CREDENTIALS. Error toast shown. No redirect.</td></tr>
+<tr><td>3</td><td>Enter non-admin email</td><td>401 INVALID_CREDENTIALS. Only admin email accepted.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-ADMN-002"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-ADMN-002</span><h3>Admin dashboard global analytics</h3><span class="priority p0">P0</span><span class="role-badge">SuperAdmin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Logged in as superadmin.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Navigate to /admin/dashboard</td><td>GET /api/v1/admin/dashboard. 6 metric cards: Total Tenants, Active Users, Messages Today, Revenue (MTD), AI Resolution Rate, Active Conversations.</td></tr>
+<tr><td>2</td><td>View growth chart</td><td>SVG line chart with tenant growth over time. Period selector works.</td></tr>
+<tr><td>3</td><td>View top tenants table</td><td>Top tenants by message volume, credit usage, or active users. Clickable to tenant detail.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-ADMN-003"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-ADMN-003</span><h3>Tenant list with search and status filter</h3><span class="priority p0">P0</span><span class="role-badge">SuperAdmin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Multiple tenants exist.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Navigate to /admin/tenants</td><td>GET /api/v1/admin/tenants. Table: name, plan, status, users, messages, credits, created date.</td></tr>
+<tr><td>2</td><td>Search by tenant name</td><td>Debounced search filters list in real-time.</td></tr>
+<tr><td>3</td><td>Filter by status (active/suspended/trial)</td><td>Only matching tenants shown. Count updates.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-ADMN-004"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-ADMN-004</span><h3>Tenant detail with tabs</h3><span class="priority p1">P1</span><span class="role-badge">SuperAdmin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Tenant exists with activity data.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Click a tenant row to open detail</td><td>GET /api/v1/admin/tenants/:id. Tabs: Overview, Users, Activity. Overview shows business info, plan, credits.</td></tr>
+<tr><td>2</td><td>View Users tab</td><td>All users for this tenant with roles, last login, status.</td></tr>
+<tr><td>3</td><td>View Activity tab</td><td>Recent activity: messages, logins, settings changes.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-ADMN-005"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-ADMN-005</span><h3>Suspend and activate tenant</h3><span class="priority p0">P0</span><span class="role-badge">SuperAdmin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Active tenant exists.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Click Suspend on an active tenant</td><td>PATCH /api/v1/admin/tenants/:id/suspend. Confirmation dialog. Status changes to suspended. Tenant users blocked from login.</td></tr>
+<tr><td>2</td><td>Click Activate on suspended tenant</td><td>PATCH /api/v1/admin/tenants/:id/activate. Status reverts to active. Users can log in again.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-ADMN-006"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-ADMN-006</span><h3>Manual token credit for tenant</h3><span class="priority p1">P1</span><span class="role-badge">SuperAdmin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Tenant detail page open.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Click "Add Credits" button</td><td>Dialog with amount input and reason field.</td></tr>
+<tr><td>2</td><td>Enter 500 credits with reason "Trial extension"</td><td>POST /api/v1/admin/tenants/:id/credit. Balance increases by 500. Transaction recorded with reason.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-ADMN-007"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-ADMN-007</span><h3>Cross-tenant user management</h3><span class="priority p1">P1</span><span class="role-badge">SuperAdmin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Multiple tenants with users exist.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Navigate to /admin/users</td><td>GET /api/v1/admin/users. All users across tenants. Columns: name, email, phone, tenant, role, status, last login.</td></tr>
+<tr><td>2</td><td>Suspend a user</td><td>PATCH /api/v1/admin/users/:id/suspend. User cannot log in. Tenant continues to function.</td></tr>
+<tr><td>3</td><td>Search by name or email</td><td>Cross-tenant search works. Results show tenant association.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-ADMN-008"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-ADMN-008</span><h3>System health monitoring</h3><span class="priority p0">P0</span><span class="role-badge">SuperAdmin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> All services running.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Navigate to /admin/health</td><td>GET /api/v1/admin/health. 5 service cards: API Server, PostgreSQL, Redis, AI Service, BullMQ. Each shows status (healthy/degraded/down), latency, uptime.</td></tr>
+<tr><td>2</td><td>Verify individual service details</td><td>Click a service card. Shows version, connection count, memory usage, last error if any.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-ADMN-009"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-ADMN-009</span><h3>Feature flags CRUD</h3><span class="priority p1">P1</span><span class="role-badge">SuperAdmin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Feature flags page loaded.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>View feature flags list</td><td>GET /api/v1/admin/feature-flags. Shows flag name, description, status (enabled/disabled), tenant scope.</td></tr>
+<tr><td>2</td><td>Toggle a flag on/off</td><td>PATCH /api/v1/admin/feature-flags/:id. Status updates instantly. Affected tenants see/lose the feature.</td></tr>
+<tr><td>3</td><td>Create a new flag</td><td>POST /api/v1/admin/feature-flags. Name, description, default state. Appears in list.</td></tr>
+<tr><td>4</td><td>Delete a flag</td><td>DELETE /api/v1/admin/feature-flags/:id. Removed from list. Tenants no longer see the feature.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-ADMN-010"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-ADMN-010</span><h3>Announcements CRUD</h3><span class="priority p1">P1</span><span class="role-badge">SuperAdmin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Announcements page loaded.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>View announcements</td><td>GET /api/v1/admin/announcements. List with title, type badge (info/warning/critical), status (active/expired), created date.</td></tr>
+<tr><td>2</td><td>Create announcement</td><td>POST /api/v1/admin/announcements. Title, message, type, priority, expiry date. Appears as banner for tenants.</td></tr>
+<tr><td>3</td><td>Edit announcement</td><td>PUT /api/v1/admin/announcements/:id. Updated content reflects immediately.</td></tr>
+<tr><td>4</td><td>Delete announcement</td><td>DELETE /api/v1/admin/announcements/:id. Removed from tenant dashboards.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-ADMN-011"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-ADMN-011</span><h3>Admin session and auth separation</h3><span class="priority p0">P0</span><span class="role-badge">SuperAdmin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Admin logged in.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Verify admin auth is separate from tenant auth</td><td>Admin uses localStorage-based auth, tenant uses NextAuth sessions. No cross-contamination.</td></tr>
+<tr><td>2</td><td>Access admin page without login</td><td>Redirect to /admin/login. Admin pages are not accessible without admin auth.</td></tr>
+<tr><td>3</td><td>Admin logout</td><td>Clear localStorage token. Redirect to /admin/login.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-ADMN-012"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-ADMN-012</span><h3>Admin sidebar navigation</h3><span class="priority p2">P2</span><span class="role-badge">SuperAdmin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Admin logged in.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Navigate through all admin pages</td><td>Sidebar links work: Dashboard, Tenants, Users, Health, Feature Flags, Announcements. Active state highlighted.</td></tr>
+<tr><td>2</td><td>Verify deep-forest sidebar styling</td><td>Admin sidebar uses different color scheme (#082A20) from tenant sidebar (#0C3B2E).</td></tr>
+</tbody></table></div></div>
+
+</div></section>
+
+<section class="chapter" id="ch-security">
+<h2 class="chapter-title" onclick="toggleChapter(this)"><span class="expand-icon">&#9660;</span>13. Security & Access Control</h2>
+<div class="chapter-body">
+
+<div class="scenario" id="QB-SCTY-001"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-SCTY-001</span><h3>JWT access token expiry and refresh</h3><span class="priority p0">P0</span><span class="role-badge">All Roles</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> User authenticated.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Wait 15 minutes (or fast-forward token expiry)</td><td>Access token expired. Next API call returns 401.</td></tr>
+<tr><td>2</td><td>apiClient automatically calls POST /api/v1/auth/refresh</td><td>New access token issued. Refresh token rotated (one-time use). Original request retried transparently.</td></tr>
+<tr><td>3</td><td>Try to reuse old refresh token</td><td>401 INVALID_REFRESH_TOKEN. Token rotation prevents replay attacks.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-SCTY-002"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-SCTY-002</span><h3>Role-based page access control</h3><span class="priority p0">P0</span><span class="role-badge">All Roles</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Users with owner, admin, agent, viewer roles exist.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Agent navigates to /settings</td><td>Settings page loads but destructive actions (delete tenant, billing changes) are hidden or disabled.</td></tr>
+<tr><td>2</td><td>Viewer tries to send a message</td><td>Compose area disabled or hidden. Viewer has read-only access.</td></tr>
+<tr><td>3</td><td>Agent tries to access /admin</td><td>Redirect to /admin/login. Tenant roles cannot access admin panel.</td></tr>
+<tr><td>4</td><td>Owner accesses all pages</td><td>Full access to all tenant pages including settings, billing, team management.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-SCTY-003"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-SCTY-003</span><h3>Role-based API endpoint protection</h3><span class="priority p0">P0</span><span class="role-badge">All Roles</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> API running with roleMiddleware.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Viewer calls DELETE /api/v1/contacts/:id</td><td>403 FORBIDDEN. Viewers cannot delete contacts.</td></tr>
+<tr><td>2</td><td>Agent calls PATCH /api/v1/settings</td><td>403 FORBIDDEN. Only owner/admin can change settings.</td></tr>
+<tr><td>3</td><td>Owner calls any endpoint</td><td>200 OK. Owner has full API access.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-SCTY-004"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-SCTY-004</span><h3>Tenant data isolation (RLS)</h3><span class="priority p0">P0</span><span class="role-badge">All Roles</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Two tenants (A and B) with data.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Tenant A user calls GET /api/v1/contacts</td><td>Only Tenant A contacts returned. No Tenant B data visible.</td></tr>
+<tr><td>2</td><td>Tenant A user tries GET /api/v1/conversations/:tenantB_conv_id</td><td>404 NOT_FOUND. RLS blocks cross-tenant access even with valid UUID.</td></tr>
+<tr><td>3</td><td>Verify at database level</td><td>SET LOCAL app.current_tenant_id is set before every query. RLS policies enforce isolation.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-SCTY-005"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-SCTY-005</span><h3>WhatsApp webhook signature verification</h3><span class="priority p0">P0</span><span class="role-badge">System</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Webhook endpoint active.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Send valid webhook with correct X-Hub-Signature-256</td><td>200 OK. HMAC-SHA256 verified. Event processed via BullMQ.</td></tr>
+<tr><td>2</td><td>Send webhook with invalid signature</td><td>401 or 403. Rejected. crypto.timingSafeEqual fails. No processing.</td></tr>
+<tr><td>3</td><td>Send webhook with missing signature header</td><td>401. Rejected immediately.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-SCTY-006"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-SCTY-006</span><h3>Razorpay webhook signature verification</h3><span class="priority p0">P0</span><span class="role-badge">System</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Razorpay webhook configured.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Send valid Razorpay webhook with correct X-Razorpay-Signature</td><td>200 OK. HMAC-SHA256 verified. Payment/subscription event processed.</td></tr>
+<tr><td>2</td><td>Send webhook with tampered body</td><td>400 or 401. Signature mismatch. Event rejected.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-SCTY-007"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-SCTY-007</span><h3>Rate limiting enforcement</h3><span class="priority p1">P1</span><span class="role-badge">All Roles</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> Rate limits configured per endpoint category.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Send 6 OTP requests in 1 minute</td><td>429 TOO_MANY_REQUESTS on 6th request. X-RateLimit headers present.</td></tr>
+<tr><td>2</td><td>Send 101 API requests in 1 minute</td><td>429 on 101st request. Tenant-scoped rate limit enforced.</td></tr>
+<tr><td>3</td><td>Wait for rate limit window to reset</td><td>Requests succeed again after window expires.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-SCTY-008"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-SCTY-008</span><h3>Input validation (Zod schemas)</h3><span class="priority p0">P0</span><span class="role-badge">All Roles</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> API endpoint with Zod validation middleware.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Send invalid phone number (+91123)</td><td>422 VALIDATION_ERROR. Zod error details: "Invalid Indian phone number".</td></tr>
+<tr><td>2</td><td>Send request with extra unexpected fields</td><td>Extra fields stripped (strict mode). No injection via unexpected properties.</td></tr>
+<tr><td>3</td><td>Send empty required fields</td><td>422 with specific field errors: "name is required", "email must be valid".</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-SCTY-009"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-SCTY-009</span><h3>Protected route middleware (Next.js Edge)</h3><span class="priority p0">P0</span><span class="role-badge">All Roles</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> User not authenticated.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Access /dashboard without session</td><td>Redirect to /login with returnUrl=/dashboard.</td></tr>
+<tr><td>2</td><td>Access /login while authenticated</td><td>Redirect to /dashboard. Auth pages not accessible when logged in.</td></tr>
+<tr><td>3</td><td>Access public routes (/pricing, /login, /signup)</td><td>No redirect. Public routes accessible without auth.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-SCTY-010"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-SCTY-010</span><h3>Logout and session invalidation</h3><span class="priority p0">P0</span><span class="role-badge">All Roles</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> User authenticated with active session.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Click logout</td><td>POST /api/v1/auth/logout. Access token JTI added to Redis blocklist. Refresh token invalidated. Redirect to /login.</td></tr>
+<tr><td>2</td><td>Try using old access token after logout</td><td>401 TOKEN_REVOKED. Redis blocklist check rejects it.</td></tr>
+<tr><td>3</td><td>Logout all devices</td><td>POST /api/v1/auth/logout-all. token_version incremented. All existing tokens invalidated.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-SCTY-011"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-SCTY-011</span><h3>API key authentication (external API)</h3><span class="priority p1">P1</span><span class="role-badge">Owner, Admin</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> API key created via settings.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Call API with valid key in Authorization header</td><td>200 OK. Key validated via SHA-256 hash lookup. Tenant context set from key.</td></tr>
+<tr><td>2</td><td>Call API with revoked key</td><td>401 API_KEY_REVOKED. Blocklist check rejects it.</td></tr>
+<tr><td>3</td><td>Call API with invalid key format</td><td>401 INVALID_API_KEY. Keys must start with jc_test_ or jc_live_ prefix.</td></tr>
+</tbody></table></div></div>
+
+<div class="scenario" id="QB-SCTY-012"><div class="scenario-header" onclick="toggleScenario(this)"><span class="expand-icon">&#9654;</span><span class="test-id">QB-SCTY-012</span><h3>CORS and security headers</h3><span class="priority p1">P1</span><span class="role-badge">System</span></div>
+<div class="scenario-body"><p class="precondition"><strong>Preconditions:</strong> API deployed with Helmet.js.</p>
+<table class="steps-table"><thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead><tbody>
+<tr><td>1</td><td>Send request from unauthorized origin</td><td>CORS error. Only whitelisted frontend origin allowed.</td></tr>
+<tr><td>2</td><td>Check response headers</td><td>X-Content-Type-Options: nosniff, X-Frame-Options: DENY, Strict-Transport-Security present.</td></tr>
+<tr><td>3</td><td>Verify X-Request-ID header</td><td>Every response includes unique X-Request-ID (UUID v4) for tracing.</td></tr>
+</tbody></table></div></div>
+
+</div></section>
+
+<section class="chapter" id="ch-issues">
+<h2 class="chapter-title" onclick="toggleChapter(this)"><span class="expand-icon">&#9660;</span>Issue Tracker</h2>
+<div class="chapter-body">
+<div class="issue-controls">
+<div class="issue-tabs">
+<button class="issue-tab active" onclick="filterIssues('all')">All</button>
+<button class="issue-tab" onclick="filterIssues('open')">Open</button>
+<button class="issue-tab" onclick="filterIssues('closed')">Closed</button>
+</div>
+<button class="btn-refresh" onclick="loadIssues()" title="Refresh issues">&#8635; Refresh</button>
+</div>
+<div id="issuesList" class="issues-list"><p class="loading-text">Loading issues...</p></div>
+</div></section>
+
+</div><!-- end .main -->
+
+<!-- Chat FAB -->
+<button class="chat-fab" id="chatFab" onclick="toggleChat()" title="QA Chat (Ctrl+/)">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+</button>
+
+<!-- Chat Side Panel -->
+<div class="chat-panel" id="chatPanel">
+<div class="chat-header">
+<h3>QA Assistant</h3>
+<span class="chat-kbd">Ctrl+/</span>
+<button class="chat-close" onclick="toggleChat()" title="Close">&times;</button>
+</div>
+<div class="chat-messages" id="chatMessages">
+<div class="chat-msg bot">Welcome to the JarvisChat QA Assistant. Ask me anything about test scenarios, bugs, or testing procedures.</div>
+</div>
+<div class="chat-input-area">
+<textarea id="chatInput" placeholder="Ask about tests, report bugs..." rows="2" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat();}"></textarea>
+<button class="chat-send" onclick="sendChat()">Send</button>
+</div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ── Config ── */
+var VERCEL_BASE = 'https://qa-bible-api.vercel.app';
+var CHAT_API_URL = VERCEL_BASE + '/api/chat';
+var ISSUES_API_URL = VERCEL_BASE + '/api/issues';
+var CREATE_ISSUE_API_URL = VERCEL_BASE + '/api/create-issue';
+var REPO = 'shriyavallabh/jarvischat-qa-bible';
+var PIN = '4321';
+var chatOpen = false;
+var issuesContextCache = null;
+var issuesContextTimestamp = 0;
+
+/* ── PIN Auth ── */
+function checkPin() {
+  var input = document.getElementById('pinInput');
+  if (input.value === PIN) {
+    document.getElementById('pinOverlay').style.display = 'none';
+    localStorage.setItem('qa-bible-auth', 'true');
+  } else {
+    input.classList.add('shake');
+    setTimeout(function() { input.classList.remove('shake'); }, 500);
+    input.value = '';
+  }
+}
+(function() {
+  if (localStorage.getItem('qa-bible-auth') === 'true') {
+    document.getElementById('pinOverlay').style.display = 'none';
+  }
+  document.getElementById('pinInput').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') checkPin();
+  });
+})();
+
+/* ── Theme Toggle ── */
+function toggleTheme() {
+  document.body.classList.toggle('light');
+  var isLight = document.body.classList.contains('light');
+  localStorage.setItem('qa-bible-theme', isLight ? 'light' : 'dark');
+  document.getElementById('themeToggle').textContent = isLight ? '🌙' : '☀️';
+}
+(function() {
+  if (localStorage.getItem('qa-bible-theme') === 'light') {
+    document.body.classList.add('light');
+    document.getElementById('themeToggle').textContent = '🌙';
+  }
+})();
+
+/* ── Sidebar Navigation ── */
+document.querySelectorAll('.sidebar a[href^="#"]').forEach(function(a) {
+  a.addEventListener('click', function(e) {
+    e.preventDefault();
+    var target = document.querySelector(this.getAttribute('href'));
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      document.querySelectorAll('.sidebar a').forEach(function(l) { l.classList.remove('active'); });
+      this.classList.add('active');
+    }
+    if (window.innerWidth < 900) {
+      document.querySelector('.sidebar').classList.remove('open');
+    }
+  });
+});
+
+/* ── Scenario Expand/Collapse ── */
+function toggleScenario(header) {
+  var body = header.nextElementSibling;
+  var icon = header.querySelector('.expand-icon');
+  if (body.style.display === 'block') {
+    body.style.display = 'none';
+    icon.innerHTML = '&#9654;';
+  } else {
+    body.style.display = 'block';
+    icon.innerHTML = '&#9660;';
+  }
+}
+
+/* ── Chapter Expand/Collapse ── */
+function toggleChapter(title) {
+  var body = title.nextElementSibling;
+  var icon = title.querySelector('.expand-icon');
+  if (body.style.display === 'none') {
+    body.style.display = 'block';
+    icon.innerHTML = '&#9660;';
+  } else {
+    body.style.display = 'none';
+    icon.innerHTML = '&#9654;';
+  }
+}
+
+/* ── Search ── */
+function searchTests() {
+  var query = document.getElementById('searchInput').value.toLowerCase();
+  var scenarios = document.querySelectorAll('.scenario');
+  var visibleCount = 0;
+  scenarios.forEach(function(s) {
+    var text = s.textContent.toLowerCase();
+    var match = !query || text.indexOf(query) !== -1;
+    s.style.display = match ? '' : 'none';
+    if (match) visibleCount++;
+  });
+  var chapters = document.querySelectorAll('.chapter');
+  chapters.forEach(function(ch) {
+    var vis = ch.querySelectorAll('.scenario:not([style*="display: none"])');
+    if (query && vis.length === 0) {
+      ch.style.display = 'none';
+    } else {
+      ch.style.display = '';
+    }
+  });
+}
+var searchTimer;
+document.getElementById('searchInput').addEventListener('input', function() {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(searchTests, 200);
+});
+
+/* ── Chat Panel ── */
+function toggleChat() {
+  chatOpen = !chatOpen;
+  document.getElementById('chatPanel').classList.toggle('open', chatOpen);
+  document.getElementById('chatFab').classList.toggle('hidden', chatOpen);
+  document.querySelector('.main').classList.toggle('chat-open', chatOpen);
+  if (chatOpen) {
+    document.getElementById('chatInput').focus();
+  }
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.ctrlKey && e.key === '/') { e.preventDefault(); toggleChat(); }
+  if (e.key === 'Escape' && chatOpen) { e.preventDefault(); toggleChat(); }
+});
+
+function extractPageContent() {
+  var visible = [];
+  document.querySelectorAll('.scenario').forEach(function(s) {
+    if (s.offsetParent !== null) {
+      var id = s.querySelector('.test-id');
+      var title = s.querySelector('h3');
+      if (id && title) visible.push(id.textContent + ' — ' + title.textContent);
+    }
+  });
+  return visible.slice(0, 30).join('\n');
+}
+
+function fetchIssuesForContext() {
+  var now = Date.now();
+  if (issuesContextCache && (now - issuesContextTimestamp) < 60000) {
+    return Promise.resolve(issuesContextCache);
+  }
+  return fetch(ISSUES_API_URL + '?repo=' + REPO)
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      var issues = (data.issues || []).slice(0, 10);
+      var ctx = issues.map(function(i) {
+        return '#' + i.number + ' [' + i.state + '] ' + i.title;
+      }).join('\n');
+      issuesContextCache = ctx;
+      issuesContextTimestamp = now;
+      return ctx;
+    })
+    .catch(function() { return ''; });
+}
+
+function formatBotMessage(text) {
+  text = text.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}\u{1F900}-\u{1F9FF}]/gu, '');
+  text = text.replace(/```([\s\S]*?)```/g, '<pre>$1</pre>');
+  text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
+  text = text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  text = text.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+  text = text.replace(/^- (.+)/gm, '<li>$1</li>');
+  text = text.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
+  text = text.replace(/\n/g, '<br>');
+
+  // Extract qa-issue JSON block
+  var issueMatch = text.match(/```qa-issue\s*([\s\S]*?)```/);
+  if (issueMatch) {
+    try {
+      var issueData = JSON.parse(issueMatch[1]);
+      text = text.replace(/```qa-issue[\s\S]*?```/, '');
+      text += '<div class="issue-suggest"><strong>Bug detected:</strong> ' + issueData.title +
+        ' <button class="btn-create-issue" onclick=\'createIssueFromChat(' + JSON.stringify(issueData).replace(/'/g, "\\'") + ')\'>Create Issue</button></div>';
+    } catch(e) {}
+  }
+  return text;
+}
+
+function appendMessage(role, html) {
+  var msgs = document.getElementById('chatMessages');
+  var div = document.createElement('div');
+  div.className = 'chat-msg ' + role;
+  div.innerHTML = html;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function sendChat() {
+  var input = document.getElementById('chatInput');
+  var msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+  appendMessage('user', msg.replace(/</g, '&lt;'));
+  appendMessage('bot', '<span class="typing">Thinking...</span>');
+
+  Promise.all([fetchIssuesForContext()]).then(function(results) {
+    var issuesCtx = results[0];
+    var pageCtx = extractPageContent();
+
+    var systemPrompt = 'You are a QA testing assistant for JarvisChat, a multi-tenant WhatsApp AI automation SaaS built with Next.js 14, Express.js, Python FastAPI, PostgreSQL with RLS, Redis, BullMQ, Socket.io.\n\n' +
+      'STRICT RULES:\n- No emojis ever.\n- Be concise. Max 3-4 sentences for simple questions. Max 10 lines for complex.\n- Be direct. Answer first, then details.\n- No greetings, no filler phrases.\n- When listing tests, use: **QB-XXX-NNN** (P0) — Title\n\n' +
+      'When a user describes a bug, output a qa-issue JSON block at the END:\n```qa-issue\n{"title":"...","body":"...","severity":"P0-P3","labels":["bug"],"testIds":["QB-XXX-NNN"]}\n```\n\n' +
+      'Current page tests:\n' + pageCtx + '\n\n' +
+      'Open issues:\n' + issuesCtx;
+
+    fetch(CHAT_API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: msg,
+        systemPrompt: systemPrompt,
+        repo: REPO
+      })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      var msgs = document.getElementById('chatMessages');
+      msgs.removeChild(msgs.lastChild);
+      appendMessage('bot', formatBotMessage(data.response || data.message || 'No response.'));
+    })
+    .catch(function(err) {
+      var msgs = document.getElementById('chatMessages');
+      msgs.removeChild(msgs.lastChild);
+      appendMessage('bot', 'Error: Could not reach the AI service. Check your connection.');
+    });
+  });
+}
+
+/* ── Issue Tracker ── */
+function loadIssues() {
+  fetch(ISSUES_API_URL + '?repo=' + REPO)
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      var list = document.getElementById('issuesList');
+      var issues = data.issues || [];
+      if (issues.length === 0) {
+        list.innerHTML = '<p class="empty-text">No issues found. Use the chat to report bugs.</p>';
+        return;
+      }
+      var html = '';
+      issues.forEach(function(issue) {
+        var stateClass = issue.state === 'open' ? 'issue-open' : 'issue-closed';
+        var labels = (issue.labels || []).map(function(l) {
+          return '<span class="issue-label">' + (l.name || l) + '</span>';
+        }).join(' ');
+        html += '<div class="issue-card ' + stateClass + '" data-state="' + issue.state + '">' +
+          '<div class="issue-top">' +
+          '<span class="issue-number">#' + issue.number + '</span>' +
+          '<span class="issue-state-badge ' + stateClass + '">' + issue.state + '</span>' +
+          '</div>' +
+          '<h4 class="issue-title">' + issue.title + '</h4>' +
+          '<div class="issue-meta">' + labels + '<span class="issue-date">' + new Date(issue.created_at).toLocaleDateString() + '</span></div>' +
+          '<div class="issue-actions">' +
+          (issue.state === 'open' ? '<button onclick="closeIssue(' + issue.number + ')">Close</button>' : '<button onclick="reopenIssue(' + issue.number + ')">Reopen</button>') +
+          ' <a href="' + issue.html_url + '" target="_blank" rel="noopener">View on GitHub</a></div>' +
+          '</div>';
+      });
+      list.innerHTML = html;
+    })
+    .catch(function() {
+      document.getElementById('issuesList').innerHTML = '<p class="empty-text">Could not load issues.</p>';
+    });
+}
+
+function filterIssues(state) {
+  document.querySelectorAll('.issue-tab').forEach(function(t) { t.classList.remove('active'); });
+  event.target.classList.add('active');
+  document.querySelectorAll('.issue-card').forEach(function(card) {
+    if (state === 'all') { card.style.display = ''; }
+    else { card.style.display = card.dataset.state === state ? '' : 'none'; }
+  });
+}
+
+function closeIssue(number) {
+  fetch(ISSUES_API_URL + '?repo=' + REPO + '&number=' + number + '&action=close', { method: 'PATCH' })
+    .then(function() { issuesContextCache = null; issuesContextTimestamp = 0; loadIssues(); showToast('Issue #' + number + ' closed.'); })
+    .catch(function() { showToast('Failed to close issue.'); });
+}
+
+function reopenIssue(number) {
+  fetch(ISSUES_API_URL + '?repo=' + REPO + '&number=' + number + '&action=reopen', { method: 'PATCH' })
+    .then(function() { issuesContextCache = null; issuesContextTimestamp = 0; loadIssues(); showToast('Issue #' + number + ' reopened.'); })
+    .catch(function() { showToast('Failed to reopen issue.'); });
+}
+
+function createIssueFromChat(data) {
+  fetch(CREATE_ISSUE_API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ repo: REPO, title: data.title, body: data.body, labels: data.labels || ['bug'] })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(result) {
+    issuesContextCache = null; issuesContextTimestamp = 0;
+    loadIssues();
+    showToast('Issue created: #' + (result.number || '?'));
+  })
+  .catch(function() { showToast('Failed to create issue.'); });
+}
+
+/* ── Toast ── */
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, 3000);
+}
+
+/* ── Auto-refresh issues ── */
+setInterval(function() {
+  if (document.visibilityState === 'visible') {
+    loadIssues();
+    issuesContextCache = null;
+    issuesContextTimestamp = 0;
+  }
+}, 60000);
+
+/* ── Init ── */
+loadIssues();
+
+/* ── Mobile sidebar toggle ── */
+document.querySelector('.sidebar-toggle')?.addEventListener('click', function() {
+  document.querySelector('.sidebar').classList.toggle('open');
+});
+</script>
+
+</body>
+</html>
